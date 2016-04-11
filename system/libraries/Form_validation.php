@@ -53,6 +53,7 @@ class CI_Form_validation {
 	 *
 	 * @var object
 	 */
+	// ci实例
 	protected $CI;
 
 	/**
@@ -60,6 +61,7 @@ class CI_Form_validation {
 	 *
 	 * @var array
 	 */
+	// 表单字段列表
 	protected $_field_data		= array();
 
 	/**
@@ -67,6 +69,7 @@ class CI_Form_validation {
 	 *
 	 * @var array
 	 */
+	// 当前表单验证配置数组
 	protected $_config_rules	= array();
 
 	/**
@@ -74,6 +77,7 @@ class CI_Form_validation {
 	 *
 	 * @var array
 	 */
+	// 验证错误数组
 	protected $_error_array		= array();
 
 	/**
@@ -81,6 +85,7 @@ class CI_Form_validation {
 	 *
 	 * @var array
 	 */
+	// 错误信息数组
 	protected $_error_messages	= array();
 
 	/**
@@ -88,6 +93,7 @@ class CI_Form_validation {
 	 *
 	 * @var string
 	 */
+	// error 前缀
 	protected $_error_prefix	= '<p>';
 
 	/**
@@ -95,6 +101,7 @@ class CI_Form_validation {
 	 *
 	 * @var string
 	 */
+	// error 后缀
 	protected $_error_suffix	= '</p>';
 
 	/**
@@ -102,6 +109,7 @@ class CI_Form_validation {
 	 *
 	 * @var string
 	 */
+	// 错误提示字符串
 	protected $error_string		= '';
 
 	/**
@@ -109,6 +117,7 @@ class CI_Form_validation {
 	 *
 	 * @var bool
 	 */
+	// 表单是否被安全验证
 	protected $_safe_form_data	= FALSE;
 
 	/**
@@ -116,6 +125,7 @@ class CI_Form_validation {
 	 *
 	 * @var array
 	 */
+	// 验证数据
 	public $validation_data	= array();
 
 	/**
@@ -126,14 +136,17 @@ class CI_Form_validation {
 	 */
 	public function __construct($rules = array())
 	{
+		// ci实例
 		$this->CI =& get_instance();
 
 		// applies delimiters set in config file.
+		// 设置错误标签 前缀
 		if (isset($rules['error_prefix']))
 		{
 			$this->_error_prefix = $rules['error_prefix'];
 			unset($rules['error_prefix']);
 		}
+		// 设置错误标签后缀
 		if (isset($rules['error_suffix']))
 		{
 			$this->_error_suffix = $rules['error_suffix'];
@@ -141,9 +154,11 @@ class CI_Form_validation {
 		}
 
 		// Validation rules can be stored in a config file.
+		// 保存验证规则
 		$this->_config_rules = $rules;
 
 		// Automatically load the form helper
+		// 自动加载form helper
 		$this->CI->load->helper('form');
 
 		log_message('info', 'Form Validation Class Initialized');
@@ -158,16 +173,17 @@ class CI_Form_validation {
 	 * rules as input, any custom error messages, validates the info,
 	 * and stores it
 	 *
-	 * @param	mixed	$field
-	 * @param	string	$label
-	 * @param	mixed	$rules
-	 * @param	array	$errors
+	 * @param	mixed	$field 字段
+	 * @param	string	$label 标签
+	 * @param	mixed	$rules 规则
+	 * @param	array	$errors 错误提示
 	 * @return	CI_Form_validation
 	 */
 	public function set_rules($field, $label = '', $rules = array(), $errors = array())
 	{
 		// No reason to set rules if we have no POST data
 		// or a validation array has not been specified
+		// 检查是否为post提交 表单字段非空
 		if ($this->CI->input->method() !== 'post' && empty($this->validation_data))
 		{
 			return $this;
@@ -175,23 +191,28 @@ class CI_Form_validation {
 
 		// If an array was passed via the first parameter instead of individual string
 		// values we cycle through it and recursively call this function.
+		// 使用一个联系数组传递整个参数
 		if (is_array($field))
 		{
 			foreach ($field as $row)
 			{
 				// Houston, we have a problem...
+				// 每个字段验证必须包含 field 和rules字段
 				if ( ! isset($row['field'], $row['rules']))
 				{
 					continue;
 				}
 
 				// If the field label wasn't passed we use the field name
+				// 如果没提供label，则使用field
 				$label = isset($row['label']) ? $row['label'] : $row['field'];
 
 				// Add the custom error message array
+				// 错误提示
 				$errors = (isset($row['errors']) && is_array($row['errors'])) ? $row['errors'] : array();
 
 				// Here we go!
+				// 将数组重新分解，然后调用set_rules函数设置
 				$this->set_rules($row['field'], $label, $row['rules'], $errors);
 			}
 
@@ -199,28 +220,34 @@ class CI_Form_validation {
 		}
 
 		// No fields or no rules? Nothing to do...
+		// 没有字段或者验证规则，直接跳过
 		if ( ! is_string($field) OR $field === '' OR empty($rules))
 		{
 			return $this;
 		}
 		elseif ( ! is_array($rules))
 		{
+			// 非数组
 			// BC: Convert pipe-separated rules string to an array
 			if ( ! is_string($rules))
 			{
+				// 非字符串，直接返回
 				return $this;
 			}
 
+			// 将规则通过|转成数组
 			$rules = preg_split('/\|(?![^\[]*\])/', $rules);
 		}
 
 		// If the field label wasn't passed we use the field name
+		// 如果label为空，则使用field
 		$label = ($label === '') ? $field : $label;
 
 		$indexes = array();
 
 		// Is the field name an array? If it is an array, we break it apart
 		// into its components so that we can fetch the corresponding POST data later
+		// ???
 		if (($is_array = (bool) preg_match_all('/\[(.*?)\]/', $field, $matches)) === TRUE)
 		{
 			sscanf($field, '%[^[][', $indexes[0]);
@@ -410,20 +437,23 @@ class CI_Form_validation {
 	 *
 	 * This function does all the work.
 	 *
-	 * @param	string	$group
+	 * @param	string	$group  ???
 	 * @return	bool
 	 */
 	public function run($group = '')
 	{
+		// 验证数据
 		$validation_array = empty($this->validation_data)
 			? $_POST
 			: $this->validation_data;
 
 		// Does the _field_data array containing the validation rules exist?
 		// If not, we look to see if they were assigned via a config file
+		// 未set_rules
 		if (count($this->_field_data) === 0)
 		{
 			// No validation rules?  We're done...
+			// 没有验证规则，返回false
 			if (count($this->_config_rules) === 0)
 			{
 				return FALSE;
@@ -1059,6 +1089,8 @@ class CI_Form_validation {
 	}
 
 	// --------------------------------------------------------------------
+	// ------------ 以下每个函数都是一个规则对于的处理函数 ---------------------
+
 
 	/**
 	 * Required

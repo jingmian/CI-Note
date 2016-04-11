@@ -52,37 +52,44 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 if ( ! function_exists('form_open'))
 {
 	/**
-	 * Form Declaration
+	 * Form Declaration 表单定义
 	 *
-	 * Creates the opening portion of the form.
+	 * Creates the opening portion of the form 创建表单.
 	 *
-	 * @param	string	the URI segments of the form destination
-	 * @param	array	a key/value pair of attributes
-	 * @param	array	a key/value pair hidden data
+	 * @param	string	the URI segments of the form destination  action
+	 * @param	array	a key/value pair of attributes  表单属性
+	 * @param	array	a key/value pair hidden data key-value的隐藏字段
 	 * @return	string
 	 */
 	function form_open($action = '', $attributes = array(), $hidden = array())
 	{
+		// 获取ci实例
 		$CI =& get_instance();
 
 		// If no action is provided then set to the current url
+		// 如果没设置action，则使用当前url
 		if ( ! $action)
 		{
 			$action = $CI->config->site_url($CI->uri->uri_string());
 		}
 		// If an action is not a full URL then turn it into one
+		// 如果action不是完整的url，则补全
 		elseif (strpos($action, '://') === FALSE)
 		{
+			// 不错url，加上base_url
 			$action = $CI->config->site_url($action);
 		}
 
+		// 将字符串转化为
 		$attributes = _attributes_to_string($attributes);
 
+		// 默认为post
 		if (stripos($attributes, 'method=') === FALSE)
 		{
 			$attributes .= ' method="post"';
 		}
 
+		// 属性规定服务器处理表单数据所接受的字符集
 		if (stripos($attributes, 'accept-charset=') === FALSE)
 		{
 			$attributes .= ' accept-charset="'.strtolower(config_item('charset')).'"';
@@ -91,11 +98,13 @@ if ( ! function_exists('form_open'))
 		$form = '<form action="'.$action.'"'.$attributes.">\n";
 
 		// Add CSRF field if enabled, but leave it out for GET requests and requests to external websites
+		// 开启csrf，而且提交到的action为本站，而且不是get提交 则生成crsf字段和值
 		if ($CI->config->item('csrf_protection') === TRUE && strpos($action, $CI->config->base_url()) !== FALSE && ! stripos($form, 'method="get"'))
 		{
 			$hidden[$CI->security->get_csrf_token_name()] = $CI->security->get_csrf_hash();
 		}
 
+		// 隐藏字段
 		if (is_array($hidden))
 		{
 			foreach ($hidden as $name => $value)
@@ -958,7 +967,7 @@ if ( ! function_exists('_parse_form_attributes'))
 if ( ! function_exists('_attributes_to_string'))
 {
 	/**
-	 * Attributes To String
+	 * Attributes To String 将属性转化成字符串
 	 *
 	 * Helper function used by some of the form helpers
 	 *
@@ -967,20 +976,24 @@ if ( ! function_exists('_attributes_to_string'))
 	 */
 	function _attributes_to_string($attributes)
 	{
+		// 为空
 		if (empty($attributes))
 		{
 			return '';
 		}
 
+		// 对象
 		if (is_object($attributes))
 		{
 			$attributes = (array) $attributes;
 		}
 
+		// 数组
 		if (is_array($attributes))
 		{
 			$atts = '';
 
+			// 遍历属性
 			foreach ($attributes as $key => $val)
 			{
 				$atts .= ' '.$key.'="'.$val.'"';
@@ -989,6 +1002,7 @@ if ( ! function_exists('_attributes_to_string'))
 			return $atts;
 		}
 
+		// 字符串
 		if (is_string($attributes))
 		{
 			return ' '.$attributes;
