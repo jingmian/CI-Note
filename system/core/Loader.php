@@ -215,12 +215,12 @@ class CI_Loader {
 			{
 				if (is_int($key))
 				{
-					//数组
+					// library名称
 					$this->library($value, $params);
 				}
 				else
 				{
-					//
+					//数组
 					$this->library($key, $params, $value);
 				}
 			}
@@ -228,11 +228,13 @@ class CI_Loader {
 			return $this;
 		}
 
+		//  检查params参数是否为数组，如果不是，则置为NULL
 		if ($params !== NULL && ! is_array($params))
 		{
 			$params = NULL;
 		}
 
+		// 加载libraray
 		$this->_ci_load_library($library, $params, $object_name);
 		return $this;
 	}
@@ -1071,6 +1073,7 @@ class CI_Loader {
 		 */
 
 		// Is this a stock library? There are a few special conditions if so ...
+		// 加载原生（system目录下的）library
 		if (file_exists(BASEPATH.'libraries/'.$subdir.$class.'.php'))
 		{
 			//存在，调用ci_load_stock_library函数加载
@@ -1345,6 +1348,13 @@ class CI_Loader {
 	 * @used-by	CI_Loader::initialize()
 	 * @return	void
 	 */
+	/* 可以自动加载下列资源
+	 * libraries/ 目录下的核心类
+	 * helpers/ 目录下的辅助函数
+	 * config/ 目录下的用户自定义配置文件
+	 * system/language/ 目录下的语言文件
+	 * models/ 目录下的模型类
+	 * */
 	protected function _ci_autoloader()
 	{
 		// 加载autoload.php文件
