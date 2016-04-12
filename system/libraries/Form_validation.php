@@ -1098,8 +1098,10 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 不能为空
 	public function required($str)
 	{
+		// 判断是否为空
 		return is_array($str) ? (bool) count($str) : (trim($str) !== '');
 	}
 
@@ -1112,6 +1114,7 @@ class CI_Form_validation {
 	 * @param	string	regex
 	 * @return	bool
 	 */
+	// 使用正则表达式验证值
 	public function regex_match($str, $regex)
 	{
 		return (bool) preg_match($regex, $str);
@@ -1126,6 +1129,7 @@ class CI_Form_validation {
 	 * @param	string	$field
 	 * @return	bool
 	 */
+	// 字段比较
 	public function matches($str, $field)
 	{
 		return isset($this->_field_data[$field], $this->_field_data[$field]['postdata'])
@@ -1142,6 +1146,7 @@ class CI_Form_validation {
 	 * @param	string	field
 	 * @return	bool
 	 */
+	// 是否不同另外一字段
 	public function differs($str, $field)
 	{
 		return ! (isset($this->_field_data[$field]) && $this->_field_data[$field]['postdata'] === $str);
@@ -1159,6 +1164,7 @@ class CI_Form_validation {
 	 * @param	string	$field
 	 * @return	bool
 	 */
+	// 是否唯一
 	public function is_unique($str, $field)
 	{
 		sscanf($field, '%[^.].%[^.]', $table, $field);
@@ -1176,6 +1182,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 最少长度
 	public function min_length($str, $val)
 	{
 		if ( ! is_numeric($val))
@@ -1195,6 +1202,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 最大长度
 	public function max_length($str, $val)
 	{
 		if ( ! is_numeric($val))
@@ -1214,6 +1222,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 是否等于val长度
 	public function exact_length($str, $val)
 	{
 		if ( ! is_numeric($val))
@@ -1232,6 +1241,7 @@ class CI_Form_validation {
 	 * @param	string	$str
 	 * @return	bool
 	 */
+	// 验证url是否正常
 	public function valid_url($str)
 	{
 		if (empty($str))
@@ -1240,11 +1250,12 @@ class CI_Form_validation {
 		}
 		elseif (preg_match('/^(?:([^:]*)\:)?\/\/(.+)$/', $str, $matches))
 		{
+			// 域名路径为空
 			if (empty($matches[2]))
 			{
 				return FALSE;
 			}
-			elseif ( ! in_array($matches[1], array('http', 'https'), TRUE))
+			elseif ( ! in_array($matches[1], array('http', 'https'), TRUE)) // 协议错误
 			{
 				return FALSE;
 			}
@@ -1282,6 +1293,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 验证email
 	public function valid_email($str)
 	{
 		if (function_exists('idn_to_ascii') && $atpos = strpos($str, '@'))
@@ -1300,6 +1312,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 验证多个使用,分隔的email字符串
 	public function valid_emails($str)
 	{
 		if (strpos($str, ',') === FALSE)
@@ -1327,6 +1340,7 @@ class CI_Form_validation {
 	 * @param	string	'ipv4' or 'ipv6' to validate a specific IP format
 	 * @return	bool
 	 */
+	// 验证ip
 	public function valid_ip($ip, $which = '')
 	{
 		return $this->CI->input->valid_ip($ip, $which);
@@ -1340,6 +1354,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 做纯字符检测 [A-Za-z]
 	public function alpha($str)
 	{
 		return ctype_alpha($str);
@@ -1353,6 +1368,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 做纯数字检查
 	public function alpha_numeric($str)
 	{
 		return ctype_alnum((string) $str);
@@ -1366,6 +1382,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 字母 数字 空格 检查
 	public function alpha_numeric_spaces($str)
 	{
 		return (bool) preg_match('/^[A-Z0-9 ]+$/i', $str);
@@ -1379,6 +1396,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 数字 字母 下划线 横杠
 	public function alpha_dash($str)
 	{
 		return (bool) preg_match('/^[a-z0-9_-]+$/i', $str);
@@ -1392,6 +1410,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 正负浮点数（.11）
 	public function numeric($str)
 	{
 		return (bool) preg_match('/^[\-+]?[0-9]*\.?[0-9]+$/', $str);
@@ -1406,6 +1425,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 正负整数
 	public function integer($str)
 	{
 		return (bool) preg_match('/^[\-+]?[0-9]+$/', $str);
@@ -1419,6 +1439,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 小数
 	public function decimal($str)
 	{
 		return (bool) preg_match('/^[\-+]?[0-9]+\.[0-9]+$/', $str);
@@ -1433,6 +1454,7 @@ class CI_Form_validation {
 	 * @param	int
 	 * @return	bool
 	 */
+	// 大于min
 	public function greater_than($str, $min)
 	{
 		return is_numeric($str) ? ($str > $min) : FALSE;
@@ -1447,6 +1469,7 @@ class CI_Form_validation {
 	 * @param	int
 	 * @return	bool
 	 */
+	// 大于等于min
 	public function greater_than_equal_to($str, $min)
 	{
 		return is_numeric($str) ? ($str >= $min) : FALSE;
@@ -1461,6 +1484,7 @@ class CI_Form_validation {
 	 * @param	int
 	 * @return	bool
 	 */
+	// 小于max
 	public function less_than($str, $max)
 	{
 		return is_numeric($str) ? ($str < $max) : FALSE;
@@ -1475,6 +1499,7 @@ class CI_Form_validation {
 	 * @param	int
 	 * @return	bool
 	 */
+	// 小于等于max
 	public function less_than_equal_to($str, $max)
 	{
 		return is_numeric($str) ? ($str <= $max) : FALSE;
@@ -1489,6 +1514,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 是否在列表内
 	public function in_list($value, $list)
 	{
 		return in_array($value, explode(',', $list), TRUE);
@@ -1502,8 +1528,10 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 是否为自然数
 	public function is_natural($str)
 	{
+		// ctype_digit +-. 不通过检查 is_numeric可以通过
 		return ctype_digit((string) $str);
 	}
 
@@ -1515,6 +1543,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// 是否为自然数，而且不是0
 	public function is_natural_no_zero($str)
 	{
 		return ($str != 0 && ctype_digit((string) $str));
@@ -1531,9 +1560,10 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	bool
 	 */
+	// base64有效编码
 	public function valid_base64($str)
 	{
-		return (base64_encode(base64_decode($str)) === $str);
+		return (base64_encode(base64_decode($str)) === $str); // ???
 	}
 
 	// --------------------------------------------------------------------
@@ -1547,13 +1577,16 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	string
 	 */
+	// 将 ' " < > 转为实体字符
 	public function prep_for_form($data = '')
 	{
+		// 未开启或者参数为空
 		if ($this->_safe_form_data === FALSE OR empty($data))
 		{
 			return $data;
 		}
 
+		// 数组，拆分批次调用
 		if (is_array($data))
 		{
 			foreach ($data as $key => $val)
@@ -1564,7 +1597,7 @@ class CI_Form_validation {
 			return $data;
 		}
 
-		return str_replace(array("'", '"', '<', '>'), array('&#39;', '&quot;', '&lt;', '&gt;'), stripslashes($data));
+		return str_replace(array("'", '"', '<', '>'), array('&#39;', '&quot;', '&lt;', '&gt;'), stripslashes($data));// 反引用
 	}
 
 	// --------------------------------------------------------------------
@@ -1575,6 +1608,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	string
 	 */
+	// 补全协议头
 	public function prep_url($str = '')
 	{
 		if ($str === 'http://' OR $str === '')
@@ -1611,6 +1645,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	string
 	 */
+	// 将php短标签转义实体字符
 	public function encode_php_tags($str)
 	{
 		return str_replace(array('<?', '?>'), array('&lt;?', '?&gt;'), $str);
@@ -1626,6 +1661,7 @@ class CI_Form_validation {
 	 *
 	 * @return	CI_Form_validation
 	 */
+	// 重置
 	public function reset_validation()
 	{
 		$this->_field_data = array();
