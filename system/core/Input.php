@@ -55,6 +55,7 @@ class CI_Input {
 	 *
 	 * @var	string
 	 */
+	// 当前用户ip
 	protected $ip_address = FALSE;
 
 	/**
@@ -64,6 +65,7 @@ class CI_Input {
 	 *
 	 * @var	bool
 	 */
+	// 是否允许使用GET数组
 	protected $_allow_get_array = TRUE;
 
 	/**
@@ -73,6 +75,7 @@ class CI_Input {
 	 *
 	 * @var	bool
 	 */
+	// 标准换行符
 	protected $_standardize_newlines;
 
 	/**
@@ -84,6 +87,7 @@ class CI_Input {
 	 *
 	 * @var	bool
 	 */
+	// 是否开启xxs过滤
 	protected $_enable_xss = FALSE;
 
 	/**
@@ -94,6 +98,7 @@ class CI_Input {
 	 *
 	 * @var	bool
 	 */
+	// 是否开启csrf
 	protected $_enable_csrf = FALSE;
 
 	/**
