@@ -125,7 +125,7 @@ class CI_Form_validation {
 	 *
 	 * @var array
 	 */
-	// 验证数据
+	// 用户需要验证的数据
 	public $validation_data	= array();
 
 	/**
@@ -247,28 +247,33 @@ class CI_Form_validation {
 
 		// Is the field name an array? If it is an array, we break it apart
 		// into its components so that we can fetch the corresponding POST data later
-		// ???
+		// 检查字段，检查字段是否为数组，
+		// pic[] Array ( [0] => Array ( [0] => [] ) [1] => Array ( [0] => ) )  pic
+		// pic[1] Array ( [0] => Array ( [0] => [1] ) [1] => Array ( [0] => 1 ) ) pic
+		// pic[1][2] Array ( [0] => Array ( [0] => [1] [1] => [2] ) [1] => Array ( [0] => 1 [1] => 2 ) ) pic
 		if (($is_array = (bool) preg_match_all('/\[(.*?)\]/', $field, $matches)) === TRUE)
 		{
+			// 获取字段名，并赋值给$indexes[0]
 			sscanf($field, '%[^[][', $indexes[0]);
 
 			for ($i = 0, $c = count($matches[0]); $i < $c; $i++)
 			{
 				if ($matches[1][$i] !== '')
 				{
-					$indexes[] = $matches[1][$i];
+					$indexes[] = $matches[1][$i]; // 获取下标 $indexes = array(0=>'pic',1=>1,2=>2)
 				}
 			}
 		}
 
 		// Build our master array
+		// 字段对应的属性
 		$this->_field_data[$field] = array(
-			'field'		=> $field,
-			'label'		=> $label,
-			'rules'		=> $rules,
-			'errors'	=> $errors,
-			'is_array'	=> $is_array,
-			'keys'		=> $indexes,
+			'field'		=> $field,		// 字段
+			'label'		=> $label,		// 名称
+			'rules'		=> $rules,		// 规则
+			'errors'	=> $errors,		// 错误提示
+			'is_array'	=> $is_array,	// 是否为数组
+			'keys'		=> $indexes,	// 下标和参数
 			'postdata'	=> NULL,
 			'error'		=> ''
 		);
@@ -291,6 +296,7 @@ class CI_Form_validation {
 	 * @param	array	$data
 	 * @return	CI_Form_validation
 	 */
+	// 设置表单待验证数据
 	public function set_data(array $data)
 	{
 		if ( ! empty($data))
@@ -313,6 +319,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	CI_Form_validation
 	 */
+	// 设置错误信息
 	public function set_message($lang, $val = '')
 	{
 		if ( ! is_array($lang))
@@ -335,6 +342,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	CI_Form_validation
 	 */
+	// 设置错误容器标签
 	public function set_error_delimiters($prefix = '<p>', $suffix = '</p>')
 	{
 		$this->_error_prefix = $prefix;
@@ -354,6 +362,7 @@ class CI_Form_validation {
 	 * @param 	string	$suffix	HTML end tag
 	 * @return	string
 	 */
+	// 获取字段对应的错误信息，包含html标签
 	public function error($field, $prefix = '', $suffix = '')
 	{
 		if (empty($this->_field_data[$field]['error']))
@@ -383,6 +392,7 @@ class CI_Form_validation {
 	 *
 	 * @return	array
 	 */
+	// 获取错误数组
 	public function error_array()
 	{
 		return $this->_error_array;
@@ -399,6 +409,7 @@ class CI_Form_validation {
 	 * @param	string
 	 * @return	string
 	 */
+	// 获取错误信息，将array通过error分隔符拼接成数组
 	public function error_string($prefix = '', $suffix = '')
 	{
 		// No errors, validation passes!
@@ -433,11 +444,11 @@ class CI_Form_validation {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Run the Validator
+	 * Run the Validator 运行验证
 	 *
 	 * This function does all the work.
 	 *
-	 * @param	string	$group  ???
+	 * @param	string	$group  配置文件中验证设置组下标
 	 * @return	bool
 	 */
 	public function run($group = '')
@@ -465,10 +476,11 @@ class CI_Form_validation {
 				$group = trim($this->CI->uri->ruri_string(), '/');
 				isset($this->_config_rules[$group]) OR $group = $this->CI->router->class.'/'.$this->CI->router->method;
 			}
-
+			// 设置验证规则
 			$this->set_rules(isset($this->_config_rules[$group]) ? $this->_config_rules[$group] : $this->_config_rules);
 
 			// Were we able to set the rules correctly?
+			// 是否正常的设置了规则
 			if (count($this->_field_data) === 0)
 			{
 				log_message('debug', 'Unable to find validation rules');
@@ -477,13 +489,16 @@ class CI_Form_validation {
 		}
 
 		// Load the language file containing error messages
+		// 加载语言
 		$this->CI->lang->load('form_validation');
 
 		// Cycle through the rules for each field and match the corresponding $validation_data item
+		// 变量字段验证
 		foreach ($this->_field_data as $field => $row)
 		{
 			// Fetch the data from the validation_data array item and cache it in the _field_data array.
 			// Depending on whether the field name is an array or a string will determine where we get it from.
+			// 数组 参数 pic[],将验证字段的信息存放在postdata里面
 			if ($row['is_array'] === TRUE)
 			{
 				$this->_field_data[$field]['postdata'] = $this->_reduce_array($validation_array, $row['keys']);
@@ -525,16 +540,19 @@ class CI_Form_validation {
 
 	/**
 	 * Traverse a multidimensional $_POST array index until the data is found
+	 * 找到数据，将它转化为多维POST数组
 	 *
 	 * @param	array
 	 * @param	array
 	 * @param	int
 	 * @return	mixed
 	 */
+	// keys= array('pic',1,2)
 	protected function _reduce_array($array, $keys, $i = 0)
 	{
 		if (is_array($array) && isset($keys[$i]))
 		{
+			// 有改字段 ？？？
 			return isset($array[$keys[$i]]) ? $this->_reduce_array($array[$keys[$i]], $keys, ($i+1)) : NULL;
 		}
 
