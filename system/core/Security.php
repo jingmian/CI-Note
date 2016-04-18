@@ -53,6 +53,7 @@ class CI_Security {
 	 *
 	 * @var	array
 	 */
+	// 需要消除字符列表
 	public $filename_bad_chars =	array(
 		'../', '<!--', '-->', '<', '>',
 		"'", '"', '&', '$', '#',
@@ -79,6 +80,7 @@ class CI_Security {
 	 *
 	 * @var	string
 	 */
+	// 编码
 	public $charset = 'UTF-8';
 
 	/**
@@ -88,6 +90,8 @@ class CI_Security {
 	 *
 	 * @var	string
 	 */
+	// xss 跨站脚本攻击
+	// xss hash
 	protected $_xss_hash;
 
 	/**
@@ -97,6 +101,8 @@ class CI_Security {
 	 *
 	 * @var	string
 	 */
+	// CSRF（Cross-site request forgery跨站请求伪造
+	// crsf hash，通过crsf hash 判断当前请求是否合法
 	protected $_csrf_hash;
 
 	/**
@@ -107,6 +113,7 @@ class CI_Security {
 	 *
 	 * @var	int
 	 */
+	// csrf 有效时间 单位为s 默认为2个小时
 	protected $_csrf_expire =	7200;
 
 	/**
@@ -116,6 +123,7 @@ class CI_Security {
 	 *
 	 * @var	string
 	 */
+	// csrf 字段名称
 	protected $_csrf_token_name =	'ci_csrf_token';
 
 	/**
@@ -125,6 +133,7 @@ class CI_Security {
 	 *
 	 * @var	string
 	 */
+	// csrf cookie 字段名称
 	protected $_csrf_cookie_name =	'ci_csrf_token';
 
 	/**
@@ -132,6 +141,7 @@ class CI_Security {
 	 *
 	 * @var	array
 	 */
+	// 不被允许的字符串列表
 	protected $_never_allowed_str =	array(
 		'document.cookie'	=> '[removed]',
 		'document.write'	=> '[removed]',
@@ -149,6 +159,7 @@ class CI_Security {
 	 *
 	 * @var	array
 	 */
+	// 不被允许的正则表达式匹配
 	protected $_never_allowed_regex = array(
 		'javascript\s*:',
 		'(document|(document\.)?window)\.(location|on\w*)',
@@ -172,6 +183,7 @@ class CI_Security {
 		if (config_item('csrf_protection'))
 		{
 			// CSRF config
+			// csrf 配置
 			foreach (array('csrf_expire', 'csrf_token_name', 'csrf_cookie_name') as $key)
 			{
 				if (NULL !== ($val = config_item($key)))
@@ -181,15 +193,18 @@ class CI_Security {
 			}
 
 			// Append application specific cookie prefix
+			// 追加cookie前缀
 			if ($cookie_prefix = config_item('cookie_prefix'))
 			{
 				$this->_csrf_cookie_name = $cookie_prefix.$this->_csrf_cookie_name;
 			}
 
 			// Set the CSRF hash
+			// 设置csrf hash
 			$this->_csrf_set_hash();
 		}
 
+		// 字符设置
 		$this->charset = strtoupper(config_item('charset'));
 
 		log_message('info', 'Security Class Initialized');
@@ -205,17 +220,21 @@ class CI_Security {
 	public function csrf_verify()
 	{
 		// If it's not a POST request we will set the CSRF cookie
+		// 如果不是post请求，则设置csrf cookie
 		if (strtoupper($_SERVER['REQUEST_METHOD']) !== 'POST')
 		{
 			return $this->csrf_set_cookie();
 		}
 
 		// Check if URI has been whitelisted from CSRF checks
+		// 检查当前uri是否在csrf白名单中
 		if ($exclude_uris = config_item('csrf_exclude_uris'))
 		{
 			$uri = load_class('URI', 'core');
+			// 遍历csrf 白名单
 			foreach ($exclude_uris as $excluded)
 			{
+				// 匹配
 				if (preg_match('#^'.$excluded.'$#i'.(UTF8_ENABLED ? 'u' : ''), $uri->uri_string()))
 				{
 					return $this;
@@ -224,24 +243,32 @@ class CI_Security {
 		}
 
 		// Do the tokens exist in both the _POST and _COOKIE arrays?
+		// post 和 cookie都存在token，或者这个token不同，报错
+		// 这是ci框架验证csrf原理，每个网站只能设置属于自己网站的cookie，通过cookie和post中生成的hash是否一样检查这个请求是否属于本站
 		if ( ! isset($_POST[$this->_csrf_token_name], $_COOKIE[$this->_csrf_cookie_name])
 			OR $_POST[$this->_csrf_token_name] !== $_COOKIE[$this->_csrf_cookie_name]) // Do the tokens match?
 		{
+			// 显示403错误
 			$this->csrf_show_error();
 		}
 
 		// We kill this since we're done and we don't want to polute the _POST array
+		// 不要污染post数组
 		unset($_POST[$this->_csrf_token_name]);
 
 		// Regenerate on every submission?
+		// 每次提交的再生？
 		if (config_item('csrf_regenerate'))
 		{
 			// Nothing should last forever
+			// 清空，下次重新生成
 			unset($_COOKIE[$this->_csrf_cookie_name]);
 			$this->_csrf_hash = NULL;
 		}
 
+		// 设置hash
 		$this->_csrf_set_hash();
+		// 设置cookie
 		$this->csrf_set_cookie();
 
 		log_message('info', 'CSRF token verified');
@@ -256,9 +283,12 @@ class CI_Security {
 	 * @codeCoverageIgnore
 	 * @return	CI_Security
 	 */
+	// 设置csrf cookie值
 	public function csrf_set_cookie()
 	{
+		// csrf 在cookie 存活时间
 		$expire = time() + $this->_csrf_expire;
+		//
 		$secure_cookie = (bool) config_item('cookie_secure');
 
 		if ($secure_cookie && ! is_https())
@@ -266,6 +296,7 @@ class CI_Security {
 			return FALSE;
 		}
 
+		// 设置cookie csrf
 		setcookie(
 			$this->_csrf_cookie_name,
 			$this->_csrf_hash,
@@ -287,6 +318,7 @@ class CI_Security {
 	 *
 	 * @return	void
 	 */
+	// csrf 提示 403
 	public function csrf_show_error()
 	{
 		show_error('The action you have requested is not allowed.', 403);
@@ -300,6 +332,7 @@ class CI_Security {
 	 * @see		CI_Security::$_csrf_hash
 	 * @return 	string	CSRF hash
 	 */
+	// 获取csrf hash
 	public function get_csrf_hash()
 	{
 		return $this->_csrf_hash;
@@ -313,6 +346,7 @@ class CI_Security {
 	 * @see		CI_Security::$_csrf_token_name
 	 * @return	string	CSRF token name
 	 */
+	// 获取token 名称
 	public function get_csrf_token_name()
 	{
 		return $this->_csrf_token_name;
@@ -329,6 +363,8 @@ class CI_Security {
 	 * most obscure XSS attempts.  Nothing is ever 100% foolproof,
 	 * of course, but I haven't been able to get anything passed
 	 * the filter.
+	 * 清理数据，这样可以防止跨站点脚本攻击。这种方法做了相当多的工作，
+	 * 但它是非常彻底的，旨在防止甚至最不起眼的的XSS尝试。
 	 *
 	 * Note: Should only be used to deal with data upon submission.
 	 *	 It's not something that should be used for general
@@ -346,13 +382,16 @@ class CI_Security {
 	 * @param 	bool		$is_image	Whether the input is an image
 	 * @return	string
 	 */
+	//  清除xss脚本函数
 	public function xss_clean($str, $is_image = FALSE)
 	{
 		// Is the string an array?
+		// 数组
 		if (is_array($str))
 		{
 			while (list($key) = each($str))
 			{
+				// 递归调用，清除xss脚本
 				$str[$key] = $this->xss_clean($str[$key]);
 			}
 
@@ -360,6 +399,7 @@ class CI_Security {
 		}
 
 		// Remove Invisible Characters
+		// 移除无效的字符  Common.php里面定义该函数
 		$str = remove_invisible_characters($str);
 
 		/*
@@ -373,9 +413,10 @@ class CI_Security {
 		 */
 		do
 		{
+			// 对已编码的 URL 字符串进行解码
 			$str = rawurldecode($str);
 		}
-		while (preg_match('/%[0-9a-f]{2,}/i', $str));
+		while (preg_match('/%[0-9a-f]{2,}/i', $str)); // 如果还存在 %xx，继续解码
 
 		/*
 		 * Convert character entities to ASCII
@@ -384,10 +425,14 @@ class CI_Security {
 		 * We only convert entities that are within tags since
 		 * these are the ones that will pose security problems.
 		 */
+		// 执行一个正则表达式搜索并且使用一个回调进行替换
+		// 这里调用 $this->_convert_attribute(< > \\)函数处理匹配到结果
 		$str = preg_replace_callback("/[^a-z0-9>]+[a-z0-9]+=([\'\"]).*?\\1/si", array($this, '_convert_attribute'), $str);
+		// 调用 $this->_decode_entity函数处理匹配到结果
 		$str = preg_replace_callback('/<\w+.*/si', array($this, '_decode_entity'), $str);
 
 		// Remove Invisible Characters Again!
+		// 再次移除无效字符
 		$str = remove_invisible_characters($str);
 
 		/*
@@ -398,12 +443,15 @@ class CI_Security {
 		 * NOTE: preg_replace was found to be amazingly slow here on
 		 * large blocks of data, so we use str_replace.
 		 */
+		// 将 tab(\t) 转成 ' '
 		$str = str_replace("\t", ' ', $str);
 
 		// Capture converted string for later comparison
+		// 捕获转换后的字符串
 		$converted_string = $str;
 
 		// Remove Strings that are never allowed
+		// 删除不被允许的字符串
 		$str = $this->_do_never_allowed($str);
 
 		/*
@@ -413,17 +461,19 @@ class CI_Security {
 		 *
 		 * <?xml
 		 *
-		 * But it doesn't seem to pose a problem.
+		 * But it doesn't seem to pose(造成) a problem.
 		 */
 		if ($is_image === TRUE)
 		{
-			// Images have a tendency to have the PHP short opening and
+			// Images have a tendency(趋势) to have the PHP short opening and
 			// closing tags every so often so we skip those and only
 			// do the long opening tags.
+			// 如果是图片，就只转化长标签
 			$str = preg_replace('/<\?(php)/i', '&lt;?\\1', $str);
 		}
 		else
 		{
+			// 转化短标签
 			$str = str_replace(array('<?', '?'.'>'), array('&lt;?', '?&gt;'), $str);
 		}
 
@@ -441,6 +491,8 @@ class CI_Security {
 
 		foreach ($words as $word)
 		{
+			// str_split  将字符串转换为数组
+			// 以\s*分隔
 			$word = implode('\s*', str_split($word)).'\s*';
 
 			// We only want to do this when it is followed by a non-word character
@@ -586,13 +638,16 @@ class CI_Security {
 	 * @param	int	$length	Output length
 	 * @return	string
 	 */
+	// 获取长度为length的字节
 	public function get_random_bytes($length)
 	{
+		// 检查参数 非0自然数
 		if (empty($length) OR ! ctype_digit((string) $length))
 		{
 			return FALSE;
 		}
 
+		// 如果存在random_bytes，则使用该函数生成
 		if (function_exists('random_bytes'))
 		{
 			try
@@ -610,12 +665,14 @@ class CI_Security {
 		}
 
 		// Unfortunately, none of the following PRNGs is guaranteed to exist ...
+		// 使用 mcrypt_create_iv 生成
 		if (defined('MCRYPT_DEV_URANDOM') && ($output = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM)) !== FALSE)
 		{
 			return $output;
 		}
 
 
+		// 读取 /dev/urandom 生成
 		if (is_readable('/dev/urandom') && ($fp = fopen('/dev/urandom', 'rb')) !== FALSE)
 		{
 			// Try not to waste entropy ...
@@ -628,6 +685,7 @@ class CI_Security {
 			}
 		}
 
+		// 使用openssl_random_pseudo_bytes 生成
 		if (function_exists('openssl_random_pseudo_bytes'))
 		{
 			return openssl_random_pseudo_bytes($length);
@@ -932,7 +990,7 @@ class CI_Security {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Attribute Conversion
+	 * Attribute Conversion 属性转化
 	 *
 	 * @used-by	CI_Security::xss_clean()
 	 * @param	array	$match
@@ -940,6 +998,7 @@ class CI_Security {
 	 */
 	protected function _convert_attribute($match)
 	{
+		// > < \\ 转成实体 或者 转义
 		return str_replace(array('>', '<', '\\'), array('&gt;', '&lt;', '\\\\'), $match[0]);
 	}
 
@@ -980,7 +1039,7 @@ class CI_Security {
 	 */
 	protected function _decode_entity($match)
 	{
-		// Protect GET variables in URLs
+		// Protect GET variables in URLs 保护get请求变量
 		// 901119URL5918AMP18930PROTECT8198
 		$match = preg_replace('|\&([a-z\_0-9\-]+)\=([a-z\_0-9\-/]+)|i', $this->xss_hash().'\\1=\\2', $match[0]);
 
@@ -1020,6 +1079,7 @@ class CI_Security {
 	 *
 	 * @return	string
 	 */
+	// 设置csrf hash 和cookie
 	protected function _csrf_set_hash()
 	{
 		if ($this->_csrf_hash === NULL)
@@ -1028,16 +1088,20 @@ class CI_Security {
 			// We don't necessarily want to regenerate it with
 			// each page load since a page could contain embedded
 			// sub-pages causing this feature to fail
+			// 如果cookie已经存在，则直接使用它的值
+			// 我们不需在页面载入的时候重新生成它
+			// 因为一个页面可能包含子页面导致该hash失效
 			if (isset($_COOKIE[$this->_csrf_cookie_name]) && is_string($_COOKIE[$this->_csrf_cookie_name])
 				&& preg_match('#^[0-9a-f]{32}$#iS', $_COOKIE[$this->_csrf_cookie_name]) === 1)
 			{
 				return $this->_csrf_hash = $_COOKIE[$this->_csrf_cookie_name];
 			}
 
+			// 生成16位随机字符
 			$rand = $this->get_random_bytes(16);
 			$this->_csrf_hash = ($rand === FALSE)
-				? md5(uniqid(mt_rand(), TRUE))
-				: bin2hex($rand);
+				? md5(uniqid(mt_rand(), TRUE)) // 虽然生成失败，就通过 md5( uniqid(mt_rand()) ) 来生成
+				: bin2hex($rand); // 将字符转成16进制字符
 		}
 
 		return $this->_csrf_hash;

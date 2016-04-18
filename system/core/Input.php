@@ -106,6 +106,7 @@ class CI_Input {
 	 *
 	 * @var array
 	 */
+	// http 请求头
 	protected $headers = array();
 
 	/**
@@ -115,6 +116,7 @@ class CI_Input {
 	 *
 	 * @var	string
 	 */
+	// raw数据
 	protected $_raw_input_stream;
 
 	/**
@@ -125,9 +127,12 @@ class CI_Input {
 	 * @see	CI_Input::input_stream()
 	 * @var	array
 	 */
+	// 转化input stream data
 	protected $_input_stream;
 
+	// 安全类
 	protected $security;
+	//
 	protected $uni;
 
 	// --------------------------------------------------------------------
@@ -142,11 +147,12 @@ class CI_Input {
 	 */
 	public function __construct()
 	{
-		$this->_allow_get_array		= (config_item('allow_get_array') === TRUE);
-		$this->_enable_xss		= (config_item('global_xss_filtering') === TRUE);
-		$this->_enable_csrf		= (config_item('csrf_protection') === TRUE);
-		$this->_standardize_newlines	= (bool) config_item('standardize_newlines');
+		$this->_allow_get_array		= (config_item('allow_get_array') === TRUE);	// 是否允许使用get数组
+		$this->_enable_xss		= (config_item('global_xss_filtering') === TRUE);	// 是否开启xss过滤
+		$this->_enable_csrf		= (config_item('csrf_protection') === TRUE);		// 是否开启csrf过滤
+		$this->_standardize_newlines	= (bool) config_item('standardize_newlines');	// 是否开启标准换行
 
+		// 加载安全类
 		$this->security =& load_class('Security', 'core');
 
 		// Do we need the UTF-8 class?

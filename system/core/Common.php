@@ -740,9 +740,11 @@ if ( ! function_exists('remove_invisible_characters'))
 {
 	/**
 	 * Remove Invisible Characters
+	 * 移除无效字符
 	 *
-	 * This prevents sandwiching null characters
+	 * This prevents sandwiching(夹) null characters
 	 * between ascii characters, like Java\0script.
+	 * 预防字符串夹带null字符，在ascii字符之间，就想这样 Java\0script
 	 *
 	 * @param	string
 	 * @param	bool
@@ -754,7 +756,7 @@ if ( ! function_exists('remove_invisible_characters'))
 
 		// every control character except newline (dec 10),
 		// carriage return (dec 13) and horizontal tab (dec 09)
-		if ($url_encoded)
+		if ($url_encoded) // 默认将字符编码 非ascii码转成%+16进制形式
 		{
 			$non_displayables[] = '/%0[0-8bcef]/';	// url encoded 00-08, 11, 12, 14, 15
 			$non_displayables[] = '/%1[0-9a-f]/';	// url encoded 16-31
@@ -764,6 +766,7 @@ if ( ! function_exists('remove_invisible_characters'))
 
 		do
 		{
+			// 模式， 替换成， 对象， -1表示无限次， count表示匹配次数
 			$str = preg_replace($non_displayables, '', $str, -1, $count);
 		}
 		while ($count);
