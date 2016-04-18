@@ -132,7 +132,7 @@ class CI_Input {
 
 	// 安全类
 	protected $security;
-	//
+	// utf8类
 	protected $uni;
 
 	// --------------------------------------------------------------------
@@ -156,15 +156,18 @@ class CI_Input {
 		$this->security =& load_class('Security', 'core');
 
 		// Do we need the UTF-8 class?
+		// 加载utf8
 		if (UTF8_ENABLED === TRUE)
 		{
 			$this->uni =& load_class('Utf8', 'core');
 		}
 
 		// Sanitize global arrays
+		// 消除全局检查变量数据
 		$this->_sanitize_globals();
 
 		// CSRF Protection check
+		// 验证 csrf，如果csrf是激活状态
 		if ($this->_enable_csrf === TRUE && ! is_cli())
 		{
 			$this->security->csrf_verify();
@@ -176,40 +179,53 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch from array
+	 * Fetch from array 变量数组
 	 *
-	 * Internal method used to retrieve values from global arrays.
+	 * Internal method used to retrieve（检索） values from global arrays. 检索全局数组的内部方法
 	 *
 	 * @param	array	&$array		$_GET, $_POST, $_COOKIE, $_SERVER, etc.
-	 * @param	mixed	$index		Index for item to be fetched from $array
-	 * @param	bool	$xss_clean	Whether to apply XSS filtering
+	 * @param	mixed	$index		Index for item to be fetched from $array 索引
+	 * @param	bool	$xss_clean	Whether to apply XSS filtering 是否使用xss过滤
 	 * @return	mixed
 	 */
 	protected function _fetch_from_array(&$array, $index = NULL, $xss_clean = NULL)
 	{
+		// OR 如果前面条件成立，则直接跳过后面掉语句 - -！
+
+		// 是否使用xss过滤
 		is_bool($xss_clean) OR $xss_clean = $this->_enable_xss;
 
 		// If $index is NULL, it means that the whole $array is requested
+		// 如果索引是空 则获取整个数组全局变量
 		isset($index) OR $index = array_keys($array);
 
 		// allow fetching multiple keys at once
 		if (is_array($index))
 		{
 			$output = array();
+			// 遍历
 			foreach ($index as $key)
 			{
+				// 逐步调用
 				$output[$key] = $this->_fetch_from_array($array, $key, $xss_clean);
 			}
 
 			return $output;
 		}
 
+		// (?:pattern)
+		// 非获取匹配，匹配pattern但不获取匹配结果，不进行存储供以后使用。
+		// 这在使用或字符“(|)”来组合一个模式的各个部分是很有用。
+		// 例如“industr(?:y|ies)”就是一个比“industry|industries”更简略的表达式。
+
 		if (isset($array[$index]))
 		{
+			// 获取索引对应的值
 			$value = $array[$index];
 		}
 		elseif (($count = preg_match_all('/(?:^[^\[]+)|\[[^]]*\]/', $index, $matches)) > 1) // Does the index contain array notation
 		{
+			// 这是设呢情况下进入？？？
 			$value = $array;
 			for ($i = 0; $i < $count; $i++)
 			{
@@ -231,6 +247,7 @@ class CI_Input {
 		}
 		else
 		{
+			// 不存在，返回null
 			return NULL;
 		}
 
@@ -242,10 +259,10 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch an item from the GET array
+	 * Fetch an item from the GET array 获取get数组变量
 	 *
-	 * @param	mixed	$index		Index for item to be fetched from $_GET
-	 * @param	bool	$xss_clean	Whether to apply XSS filtering
+	 * @param	mixed	$index		Index for item to be fetched from $_GET 下标
+	 * @param	bool	$xss_clean	Whether to apply XSS filtering 是否使用xss过滤
 	 * @return	mixed
 	 */
 	public function get($index = NULL, $xss_clean = NULL)
@@ -256,7 +273,7 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch an item from the POST array
+	 * Fetch an item from the POST array 获取post数组
 	 *
 	 * @param	mixed	$index		Index for item to be fetched from $_POST
 	 * @param	bool	$xss_clean	Whether to apply XSS filtering
@@ -270,7 +287,7 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch an item from POST data with fallback to GET
+	 * Fetch an item from POST data with fallback to GET 获取post、get数组
 	 *
 	 * @param	string	$index		Index for item to be fetched from $_POST or $_GET
 	 * @param	bool	$xss_clean	Whether to apply XSS filtering
@@ -286,7 +303,7 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch an item from GET data with fallback to POST
+	 * Fetch an item from GET data with fallback to POST 获取get post数组
 	 *
 	 * @param	string	$index		Index for item to be fetched from $_GET or $_POST
 	 * @param	bool	$xss_clean	Whether to apply XSS filtering
@@ -302,7 +319,7 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch an item from the COOKIE array
+	 * Fetch an item from the COOKIE array 获取cookie
 	 *
 	 * @param	mixed	$index		Index for item to be fetched from $_COOKIE
 	 * @param	bool	$xss_clean	Whether to apply XSS filtering
@@ -316,7 +333,7 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch an item from the SERVER array
+	 * Fetch an item from the SERVER array 获取server
 	 *
 	 * @param	mixed	$index		Index for item to be fetched from $_SERVER
 	 * @param	bool	$xss_clean	Whether to apply XSS filtering
@@ -331,6 +348,8 @@ class CI_Input {
 
 	/**
 	 * Fetch an item from the php://input stream
+	 * php://input stream 可以获取原始的post数据，但是不能用于multipart/form-data类型的post
+	 * 更多信息，参考 http://www.nowamagic.net/academy/detail/12220520
 	 *
 	 * Useful when you need to access PUT, DELETE or PATCH request data.
 	 *
@@ -340,11 +359,17 @@ class CI_Input {
 	 */
 	public function input_stream($index = NULL, $xss_clean = NULL)
 	{
-		// Prior to PHP 5.6, the input stream can only be read once,
+		// Prior(之前) to PHP 5.6, the input stream can only be read once,
+		// 5.6之前，input stream只可以读取一次
 		// so we'll need to check if we have already done that first.
+		// 所以我们需要检查如果我们已经做过一次了
 		if ( ! is_array($this->_input_stream))
 		{
 			// $this->raw_input_stream will trigger __get().
+			// raw_input_stream 会触发__get()
+
+			// parse_str将字符串解析成多个变量
+			// 将raw_input_steam 转化成变量，并保存到input_stream数组中
 			parse_str($this->raw_input_stream, $this->_input_stream);
 			is_array($this->_input_stream) OR $this->_input_stream = array();
 		}
@@ -425,28 +450,35 @@ class CI_Input {
 
 	/**
 	 * Fetch the IP Address
-	 *
+	 * 获取用户ip地址
 	 * Determines and validates the visitor's IP address.
 	 *
 	 * @return	string	IP address
 	 */
 	public function ip_address()
 	{
+		// 已经获取 ，直接返回
 		if ($this->ip_address !== FALSE)
 		{
 			return $this->ip_address;
 		}
 
+		// 代理ip，逗号分隔开
 		$proxy_ips = config_item('proxy_ips');
 		if ( ! empty($proxy_ips) && ! is_array($proxy_ips))
 		{
 			$proxy_ips = explode(',', str_replace(' ', '', $proxy_ips));
 		}
 
+		// 通过server中remote_addr获取ip
 		$this->ip_address = $this->server('REMOTE_ADDR');
+
 
 		if ($proxy_ips)
 		{
+			// 如果代理服务器ip不为空情况下
+
+			// 遍历 HTTP_X_FORWARDED_FOR、HTTP_CLIENT_IP、HTTP_X_CLIENT_IP、HTTP_X_CLUSTER_CLIENT_IP
 			foreach (array('HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'HTTP_X_CLIENT_IP', 'HTTP_X_CLUSTER_CLIENT_IP') as $header)
 			{
 				if (($spoof = $this->server($header)) !== NULL)
@@ -601,12 +633,13 @@ class CI_Input {
 
 	/**
 	 * Sanitize Globals
+	 * 消除全局变量
 	 *
 	 * Internal method serving for the following purposes:
 	 *
-	 *	- Unsets $_GET data, if query strings are not enabled
-	 *	- Cleans POST, COOKIE and SERVER data
-	 * 	- Standardizes newline characters to PHP_EOL
+	 *	- Unsets $_GET data, if query strings are not enabled 如果不允许get数组，则消除get数组
+	 *	- Cleans POST, COOKIE and SERVER data 检查 post，cookie，server数据
+	 * 	- Standardizes newline characters to PHP_EOL 使用php_eol换行
 	 *
 	 * @return	void
 	 */
@@ -615,12 +648,15 @@ class CI_Input {
 		// Is $_GET data allowed? If not we'll set the $_GET to an empty array
 		if ($this->_allow_get_array === FALSE)
 		{
+			// 关闭get数组，
 			$_GET = array();
 		}
 		elseif (is_array($_GET))
 		{
+			// 变量get数据，检查是否有恶意字符
 			foreach ($_GET as $key => $val)
 			{
+				// 清楚key 或者 val中恶意字符
 				$_GET[$this->_clean_input_keys($key)] = $this->_clean_input_data($val);
 			}
 		}
@@ -628,8 +664,10 @@ class CI_Input {
 		// Clean $_POST Data
 		if (is_array($_POST))
 		{
+			// 变量post
 			foreach ($_POST as $key => $val)
 			{
+				// 调用_clean_input_key 和 _clean_input_data 检查数据
 				$_POST[$this->_clean_input_keys($key)] = $this->_clean_input_data($val);
 			}
 		}
@@ -662,6 +700,7 @@ class CI_Input {
 		}
 
 		// Sanitize PHP_SELF
+		// 剥去字符串中的 HTML、XML 以及 PHP 的标签
 		$_SERVER['PHP_SELF'] = strip_tags($_SERVER['PHP_SELF']);
 
 		log_message('debug', 'Global POST, GET and COOKIE data sanitized');
@@ -670,7 +709,7 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Clean Input Data
+	 * Clean Input Data 检查input数据
 	 *
 	 * Internal method that aids in escaping data and
 	 * standardizing newline characters to PHP_EOL.
@@ -680,11 +719,14 @@ class CI_Input {
 	 */
 	protected function _clean_input_data($str)
 	{
+		// 数组
 		if (is_array($str))
 		{
 			$new_array = array();
+			// 变量数组
 			foreach (array_keys($str) as $key)
 			{
+				// 调用函数检查过滤数据
 				$new_array[$this->_clean_input_keys($key)] = $this->_clean_input_data($str[$key]);
 			}
 			return $new_array;
@@ -693,23 +735,28 @@ class CI_Input {
 		/* We strip slashes if magic quotes is on to keep things consistent
 
 		   NOTE: In PHP 5.4 get_magic_quotes_gpc() will always return 0 and
-		         it will probably not exist in future versions at all.
+		         it will probably not exist in future（未来） versions at all.
 		*/
+		// 小于5.4版本，而且开启magic_quotes_gpc
 		if ( ! is_php('5.4') && get_magic_quotes_gpc())
 		{
+			// 反引用一个引用字符串
 			$str = stripslashes($str);
 		}
 
 		// Clean UTF-8 if supported
 		if (UTF8_ENABLED === TRUE)
 		{
+			// 使用utf8检查清理
 			$str = $this->uni->clean_string($str);
 		}
 
 		// Remove control characters
+		// 移除无效字符
 		$str = remove_invisible_characters($str, FALSE);
 
 		// Standardize newlines if needed
+		// 使用标准换行
 		if ($this->_standardize_newlines === TRUE)
 		{
 			return preg_replace('/(?:\r\n|[\r\n])/', PHP_EOL, $str);
@@ -721,14 +768,14 @@ class CI_Input {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Clean Keys
+	 * Clean Keys 清理key，允许key存在 a-z0-9:_/|-
 	 *
-	 * Internal method that helps to prevent malicious users
-	 * from trying to exploit keys we make sure that keys are
+	 * Internal method that helps to prevent malicious(恶意) users
+	 * from trying to exploit(利用) keys we make sure that keys are
 	 * only named with alpha-numeric text and a few other items.
 	 *
 	 * @param	string	$str	Input string
-	 * @param	bool	$fatal	Whether to terminate script exection
+	 * @param	bool	$fatal	Whether to terminate script exection 遇到无效key，是否终止脚本或者返回false
 	 *				or to return FALSE if an invalid
 	 *				key is encountered
 	 * @return	string|bool
@@ -737,12 +784,14 @@ class CI_Input {
 	{
 		if ( ! preg_match('/^[a-z0-9:_\/|-]+$/i', $str))
 		{
+			// 返回
 			if ($fatal === TRUE)
 			{
 				return FALSE;
 			}
 			else
 			{
+				// 终止脚本
 				set_status_header(503);
 				echo 'Disallowed Key Characters.';
 				exit(7); // EXIT_USER_INPUT
@@ -883,7 +932,7 @@ class CI_Input {
 	// ------------------------------------------------------------------------
 
 	/**
-	 * Magic __get()
+	 * Magic __get() 魔术方法，get
 	 *
 	 * Allows read access to protected properties
 	 *
@@ -894,11 +943,13 @@ class CI_Input {
 	{
 		if ($name === 'raw_input_stream')
 		{
+			//如果存在了_raw_input_steam 则跳过，否则使用file_get_contents('php://input')读取
 			isset($this->_raw_input_stream) OR $this->_raw_input_stream = file_get_contents('php://input');
 			return $this->_raw_input_stream;
 		}
 		elseif ($name === 'ip_address')
 		{
+			// 返回客户ip
 			return $this->ip_address;
 		}
 	}
