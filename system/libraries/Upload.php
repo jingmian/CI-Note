@@ -53,6 +53,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 最大长度
 	public $max_size = 0;
 
 	/**
@@ -60,6 +61,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 最大图片宽度
 	public $max_width = 0;
 
 	/**
@@ -67,6 +69,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 最大图片高度
 	public $max_height = 0;
 
 	/**
@@ -74,6 +77,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 最小图片宽度
 	public $min_width = 0;
 
 	/**
@@ -81,6 +85,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 最小图片高度
 	public $min_height = 0;
 
 	/**
@@ -88,13 +93,15 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 最长文件名
 	public $max_filename = 0;
 
 	/**
-	 * Maximum duplicate filename increment ID
+	 * Maximum duplicate（重复） filename increment ID
 	 *
 	 * @var	int
 	 */
+	// 同名文件，后面最大自赠数 same_name_1.jpg same_name_2.jgp ... same_name_100.jgp
 	public $max_filename_increment = 100;
 
 	/**
@@ -102,6 +109,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 允许上传文件类型
 	public $allowed_types = '';
 
 	/**
@@ -109,6 +117,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 临时文件名字
 	public $file_temp = '';
 
 	/**
@@ -116,6 +125,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 文件名
 	public $file_name = '';
 
 	/**
@@ -123,6 +133,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 原始文件名
 	public $orig_name = '';
 
 	/**
@@ -130,6 +141,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 文件类型
 	public $file_type = '';
 
 	/**
@@ -137,6 +149,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 文件大小
 	public $file_size = NULL;
 
 	/**
@@ -144,6 +157,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 文件扩展名
 	public $file_ext = '';
 
 	/**
@@ -151,6 +165,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 强制文件扩展名小写
 	public $file_ext_tolower = FALSE;
 
 	/**
@@ -158,6 +173,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 上传目录
 	public $upload_path = '';
 
 	/**
@@ -165,6 +181,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 文件名相同时候，是否覆盖原文件
 	public $overwrite = FALSE;
 
 	/**
@@ -172,6 +189,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 如果设置为 TRUE ，文件名将会转换为一个随机的字符串 如果你不希望上传文件的人知道保存后的文件名，这个参数会很有用
 	public $encrypt_name = FALSE;
 
 	/**
@@ -179,6 +197,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 是否为图片
 	public $is_image = FALSE;
 
 	/**
@@ -186,6 +205,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 图片宽度
 	public $image_width = NULL;
 
 	/**
@@ -193,6 +213,7 @@ class CI_Upload {
 	 *
 	 * @var	int
 	 */
+	// 图片高度
 	public $image_height = NULL;
 
 	/**
@@ -200,6 +221,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 图片类型
 	public $image_type = '';
 
 	/**
@@ -207,6 +229,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 一个包含了图片宽度和高度的字符串（用于放在 image 标签中）
 	public $image_size_str = '';
 
 	/**
@@ -214,6 +237,7 @@ class CI_Upload {
 	 *
 	 * @var	array
 	 */
+	// 错误信息
 	public $error_msg = array();
 
 	/**
@@ -221,6 +245,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 是否移除空格
 	public $remove_spaces = TRUE;
 
 	/**
@@ -228,6 +253,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 如果设置为 TRUE ，将会在服务端对文件类型进行检测，可以预防代码注入攻击 除非不得已，请不要禁用该选项，这将导致安全风险
 	public $detect_mime = TRUE;
 
 	/**
@@ -235,6 +261,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 是否开启xss过滤
 	public $xss_clean = FALSE;
 
 	/**
@@ -242,6 +269,9 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 如果设置为 TRUE ，那么带有多个后缀名的文件将会添加一个下划线后缀
+	// 这样可以避免触发 Apache mod_mime 。
+	// 如果你的上传目录是公开的，请不要关闭该选项，这将导致安全风险
 	public $mod_mime_fix = TRUE;
 
 	/**
@@ -249,6 +279,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 临时文件前缀
 	public $temp_prefix = 'temp_file_';
 
 	/**
@@ -256,6 +287,7 @@ class CI_Upload {
 	 *
 	 * @var	bool
 	 */
+	// 发送到客户端的文件名
 	public $client_name = '';
 
 	// --------------------------------------------------------------------
@@ -265,6 +297,7 @@ class CI_Upload {
 	 *
 	 * @var	string
 	 */
+	// 文件名是否重写
 	protected $_file_name_override = '';
 
 	/**
@@ -272,6 +305,7 @@ class CI_Upload {
 	 *
 	 * @var	array
 	 */
+	// mine信息
 	protected $_mimes = array();
 
 	/**
@@ -279,6 +313,7 @@ class CI_Upload {
 	 *
 	 * @var	object
 	 */
+	// ci对象
 	protected $_CI;
 
 	// --------------------------------------------------------------------
@@ -291,10 +326,11 @@ class CI_Upload {
 	 */
 	public function __construct($config = array())
 	{
+		// 使用initialize初始化
 		empty($config) OR $this->initialize($config, FALSE);
 
-		$this->_mimes =& get_mimes();
-		$this->_CI =& get_instance();
+		$this->_mimes =& get_mimes();	// 获取mine
+		$this->_CI =& get_instance();	// 获取ci
 
 		log_message('info', 'Upload Class Initialized');
 	}
@@ -304,53 +340,70 @@ class CI_Upload {
 	/**
 	 * Initialize preferences
 	 *
-	 * @param	array	$config
-	 * @param	bool	$reset
+	 * @param	array	$config 配置数组
+	 * @param	bool	$reset 是否重置配置
 	 * @return	CI_Upload
 	 */
+	// 初始化步骤，重置不重置最大区别是不在config配置的属性处理方式
 	public function initialize(array $config = array(), $reset = TRUE)
 	{
+		// 获取本类信息
 		$reflection = new ReflectionClass($this);
 
 		if ($reset === TRUE)
 		{
+			// 重置配置
+
+			// 获取默认属性 key-value
 			$defaults = $reflection->getDefaultProperties();
+			// 变量默认属性 keys
 			foreach (array_keys($defaults) as $key)
 			{
+				// protected private类型 跳过
 				if ($key[0] === '_')
 				{
 					continue;
 				}
 
+				// config数组这是该key信息
 				if (isset($config[$key]))
 				{
+					// 是否有对应的set_key函数，如果有，直接调用设置该属性
 					if ($reflection->hasMethod('set_'.$key))
 					{
 						$this->{'set_'.$key}($config[$key]);
 					}
 					else
 					{
+						// 否则直接赋值
 						$this->$key = $config[$key];
 					}
 				}
 				else
 				{
+					// 使用默认值
 					$this->$key = $defaults[$key];
 				}
 			}
 		}
 		else
 		{
+			// 不重置配置
+
+			// 遍历config
 			foreach ($config as $key => &$value)
 			{
+				// public属性，而且有该属性
 				if ($key[0] !== '_' && $reflection->hasProperty($key))
 				{
+					// 存在set函数，则调用set函数
 					if ($reflection->hasMethod('set_'.$key))
 					{
 						$this->{'set_'.$key}($value);
 					}
 					else
 					{
+						// 否则直接赋值
 						$this->$key = $value;
 					}
 				}
@@ -358,7 +411,9 @@ class CI_Upload {
 		}
 
 		// if a file_name was provided in the config, use it instead of the user input
+		// 优先使用config提供的file_name，而不适用用户上传的文件名
 		// supplied file name for all uploads until initialized again
+		// 使用file_name，直到upload重新初始化
 		$this->_file_name_override = $this->file_name;
 		return $this;
 	}
@@ -371,6 +426,7 @@ class CI_Upload {
 	 * @param	string	$field
 	 * @return	bool
 	 */
+	// 上传处理函数
 	public function do_upload($field = 'userfile')
 	{
 		// Is $_FILES[$field] set? If not, no reason to continue.
