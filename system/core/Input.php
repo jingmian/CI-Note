@@ -381,22 +381,24 @@ class CI_Input {
 
 	/**
 	 * Set cookie
+	 * 设置cookie
 	 *
-	 * Accepts an arbitrary number of parameters (up to 7) or an associative
+	 * Accepts an arbitrary（任意） number of parameters (up to 7) or an associative
 	 * array in the first parameter containing all the values.
 	 *
-	 * @param	string|mixed[]	$name		Cookie name or an array containing parameters
-	 * @param	string		$value		Cookie value
-	 * @param	int		$expire		Cookie expiration time in seconds
-	 * @param	string		$domain		Cookie domain (e.g.: '.yourdomain.com')
-	 * @param	string		$path		Cookie path (default: '/')
-	 * @param	string		$prefix		Cookie name prefix
-	 * @param	bool		$secure		Whether to only transfer cookies via SSL
-	 * @param	bool		$httponly	Whether to only makes the cookie accessible via HTTP (no javascript)
+	 * @param	string|mixed[]	$name		Cookie name or an array containing parameters 名称或者包含全部参数数组
+	 * @param	string		$value		Cookie value 值
+	 * @param	int		$expire		Cookie expiration time in seconds 存活时间
+	 * @param	string		$domain		Cookie domain (e.g.: '.yourdomain.com') 域名
+	 * @param	string		$path		Cookie path (default: '/') 路径
+	 * @param	string		$prefix		Cookie name prefix 前缀
+	 * @param	bool		$secure		Whether to only transfer cookies via SSL 是否只在ssl下传输
+	 * @param	bool		$httponly	Whether to only makes the cookie accessible via HTTP (no javascript) 是否只允许通过http访问cookie
 	 * @return	void
 	 */
 	public function set_cookie($name, $value = '', $expire = '', $domain = '', $path = '/', $prefix = '', $secure = FALSE, $httponly = FALSE)
 	{
+		// 数组，则解析数组到各个变量中
 		if (is_array($name))
 		{
 			// always leave 'name' in last place, as the loop will break otherwise, due to $$item
@@ -409,31 +411,37 @@ class CI_Input {
 			}
 		}
 
+		//　前缀
 		if ($prefix === '' && config_item('cookie_prefix') !== '')
 		{
 			$prefix = config_item('cookie_prefix');
 		}
 
+		// 域名
 		if ($domain == '' && config_item('cookie_domain') != '')
 		{
 			$domain = config_item('cookie_domain');
 		}
 
+		//路径
 		if ($path === '/' && config_item('cookie_path') !== '/')
 		{
 			$path = config_item('cookie_path');
 		}
 
+		// 是否只在ssl下传输
 		if ($secure === FALSE && config_item('cookie_secure') === TRUE)
 		{
 			$secure = config_item('cookie_secure');
 		}
 
+		// 是否只允许通过http访问cookie，如果设置true，脚本（如JavaScript）访问不了cookie
 		if ($httponly === FALSE && config_item('cookie_httponly') !== FALSE)
 		{
 			$httponly = config_item('cookie_httponly');
 		}
 
+		// 生存时间
 		if ( ! is_numeric($expire))
 		{
 			$expire = time() - 86500;
@@ -443,6 +451,7 @@ class CI_Input {
 			$expire = ($expire > 0) ? time() + $expire : 0;
 		}
 
+		// 调用内置php函数设置cookie
 		setcookie($prefix.$name, $value, $expire, $path, $domain, $secure, $httponly);
 	}
 
@@ -455,6 +464,7 @@ class CI_Input {
 	 *
 	 * @return	string	IP address
 	 */
+	// ??????????????????????????????????????????????????
 	public function ip_address()
 	{
 		// 已经获取 ，直接返回
@@ -472,7 +482,6 @@ class CI_Input {
 
 		// 通过server中remote_addr获取ip
 		$this->ip_address = $this->server('REMOTE_ADDR');
-
 
 		if ($proxy_ips)
 		{
@@ -599,6 +608,7 @@ class CI_Input {
 	 * @param	string	$which	IP protocol: 'ipv4' or 'ipv6'
 	 * @return	bool
 	 */
+	// 验证ip地址是否有效
 	public function valid_ip($ip, $which = '')
 	{
 		switch (strtolower($which))
@@ -613,7 +623,7 @@ class CI_Input {
 				$which = NULL;
 				break;
 		}
-
+		// php 内置验证数据函数
 		return (bool) filter_var($ip, FILTER_VALIDATE_IP, $which);
 	}
 
@@ -624,6 +634,7 @@ class CI_Input {
 	 *
 	 * @return	string|null	User Agent string or NULL if it doesn't exist
 	 */
+	// 对ua进行xss过滤
 	public function user_agent($xss_clean = NULL)
 	{
 		return $this->_fetch_from_array($_SERVER, 'HTTP_USER_AGENT', $xss_clean);
@@ -815,15 +826,18 @@ class CI_Input {
 	 * @param	bool	$xss_clean	Whether to apply XSS filtering
 	 * @return	array
 	 */
+	// 请求头部
 	public function request_headers($xss_clean = FALSE)
 	{
 		// If header is already defined, return it immediately
+		// 已经存在
 		if ( ! empty($this->headers))
 		{
 			return $this->headers;
 		}
 
 		// In Apache, you can simply call apache_request_headers()
+		// 在 apache 环境下，可以使用 apache_request_headers 获取全部 HTTP 请求头信息
 		if (function_exists('apache_request_headers'))
 		{
 			return $this->headers = apache_request_headers();
@@ -833,12 +847,14 @@ class CI_Input {
 
 		foreach ($_SERVER as $key => $val)
 		{
+			// 变量server，寻找http_开头的变量，并保存到header中
 			if (sscanf($key, 'HTTP_%s', $header) === 1)
 			{
 				// take SOME_HEADER and turn it into Some-Header
-				$header = str_replace('_', ' ', strtolower($header));
+				$header = str_replace('_', ' ', strtolower($header)); // 将字符串中每个单词的首字母转换为大写
 				$header = str_replace(' ', '-', ucwords($header));
 
+				// 获取server中key对应的值
 				$this->headers[$header] = $this->_fetch_from_array($_SERVER, $key, $xss_clean);
 			}
 		}
@@ -857,10 +873,12 @@ class CI_Input {
 	 * @param	bool		$xss_clean	Whether to apply XSS filtering
 	 * @return	string|null	The requested header on success or NULL on failure
 	 */
+	// 获取请求头部
 	public function get_request_header($index, $xss_clean = FALSE)
 	{
 		static $headers;
 
+		//　如果不存在，则获取headers
 		if ( ! isset($headers))
 		{
 			empty($this->headers) && $this->request_headers();
@@ -870,13 +888,16 @@ class CI_Input {
 			}
 		}
 
+		// 格式化index
 		$index = strtolower($index);
 
+		// 不存在该key对应的val，返回null
 		if ( ! isset($headers[$index]))
 		{
 			return NULL;
 		}
 
+		// 如果开启xss，则过滤xss，然后在返回val
 		return ($xss_clean === TRUE)
 			? $this->security->xss_clean($headers[$index])
 			: $headers[$index];
@@ -891,6 +912,7 @@ class CI_Input {
 	 *
 	 * @return 	bool
 	 */
+	// 是否为ajax请求
 	public function is_ajax_request()
 	{
 		return ( ! empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
@@ -906,6 +928,7 @@ class CI_Input {
 	 * @deprecated	3.0.0	Use is_cli() instead
 	 * @return	bool
 	 */
+	// 是否为cli请求
 	public function is_cli_request()
 	{
 		return is_cli();
@@ -922,6 +945,7 @@ class CI_Input {
 	 *				(default: FALSE)
 	 * @return 	string
 	 */
+	// 获取请求方法
 	public function method($upper = FALSE)
 	{
 		return ($upper)

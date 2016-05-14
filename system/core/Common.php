@@ -619,15 +619,20 @@ if ( ! function_exists('set_status_header'))
 if ( ! function_exists('_error_handler'))
 {
 	/**
-	 * Error Handler
+	 * Error Handler 错误处理函数
 	 *
 	 * This is the custom error handler that is declared at the (relative)
-	 * top of CodeIgniter.php. The main reason we use this is to permit
+	 * top of CodeIgniter.php. The main reason we use this is to permit（许可）
 	 * PHP errors to be logged in our own log files since the user may
-	 * not have access to server logs. Since this function effectively
-	 * intercepts PHP errors, however, we also need to display errors
+	 * not have access to server logs. Since this function effectively（有效）
+	 * intercepts（拦截） PHP errors, however, we also need to display errors
 	 * based on the current error_reporting level.
 	 * We do that with the use of a PHP error template.
+	 *
+	 * 自动以错误处理函数
+	 * 这样可以使php错误记录到我们的日志文件中来，因为用户可能没用权限访问服务器日志
+	 * 这个函数有效的拦截的php错误
+	 * 但是显示错误是根据当前php的error_reporting 等级
 	 *
 	 * @param	int	$severity
 	 * @param	string	$message
@@ -635,17 +640,19 @@ if ( ! function_exists('_error_handler'))
 	 * @param	int	$line
 	 * @return	void
 	 */
-	 // 
+	 // 自定义错误处理函数
 	function _error_handler($severity, $message, $filepath, $line)
 	{
+		// 等级
 		$is_error = (((E_ERROR | E_COMPILE_ERROR | E_CORE_ERROR | E_USER_ERROR) & $severity) === $severity);
 
 		// When an error occurred, set the status header to '500 Internal Server Error'
-		// to indicate to the client something went wrong.
+		// to indicate（说明） to the client something went wrong.
 		// This can't be done within the $_error->show_php_error method because
 		// it is only called when the display_errors flag is set (which isn't usually
 		// the case in a production environment) or when errors are ignored because
 		// they are above the error_reporting threshold.
+		// 当错误出现，设置一个500http状态码返回到客户端以此说明出错
 		if ($is_error)
 		{
 			set_status_header(500);
@@ -653,23 +660,32 @@ if ( ! function_exists('_error_handler'))
 
 		// Should we ignore the error? We'll get the current error_reporting
 		// level and add its bits with the severity bits to find out.
+		// 我们应该忽略改错误？我们应该获取当前错误等级
+		// 然后解决处理或者忽略改错误
 		if (($severity & error_reporting()) !== $severity)
 		{
+			// 忽略改错误
 			return;
 		}
 
+		// 载入异常类
 		$_error =& load_class('Exceptions', 'core');
+		// 记录异常
 		$_error->log_exception($severity, $message, $filepath, $line);
 
 		// Should we display the error?
+		// 是否显示错误
 		if (str_ireplace(array('off', 'none', 'no', 'false', 'null'), '', ini_get('display_errors')))
 		{
+			// 显示错误
 			$_error->show_php_error($severity, $message, $filepath, $line);
 		}
 
 		// If the error is fatal, the execution of the script should be stopped because
-		// errors can't be recovered from. Halting the script conforms with PHP's
+		// errors can't be recovered from. Halting the script conforms（符合） with PHP's
 		// default error handling. See http://www.php.net/manual/en/errorfunc.constants.php
+		// 如果是致命错误，因为无法从恢复错误应该停止脚本的执行。
+		// 停止该脚本符合 PHP 的默认的错误处理
 		if ($is_error)
 		{
 			exit(1); // EXIT_ERROR
@@ -687,16 +703,19 @@ if ( ! function_exists('_exception_handler'))
 	 * Sends uncaught exceptions to the logger and displays them
 	 * only if display_errors is On so that they don't show up in
 	 * production environments.
+	 * 发送到日记的未捕获的异常并显示他们只有 display_errors，他们不能在生产环境中的显示。
 	 *
 	 * @param	Exception	$exception
 	 * @return	void
 	 */
 	function _exception_handler($exception)
 	{
+		// 加载exceptions类，记录异常
 		$_error =& load_class('Exceptions', 'core');
 		$_error->log_exception('error', 'Exception: '.$exception->getMessage(), $exception->getFile(), $exception->getLine());
 
 		// Should we display the error?
+		// 根据display_errors，是否显示异常
 		if (str_ireplace(array('off', 'none', 'no', 'false', 'null'), '', ini_get('display_errors')))
 		{
 			$_error->show_exception($exception);
@@ -714,10 +733,11 @@ if ( ! function_exists('_shutdown_handler'))
 	 * Shutdown Handler
 	 *
 	 * This is the shutdown handler that is declared at the top
-	 * of CodeIgniter.php. The main reason we use this is to simulate
+	 * of CodeIgniter.php. The main reason we use this is to simulate（模拟）
 	 * a complete custom exception handler.
 	 *
-	 * E_STRICT is purposively neglected because such events may have
+	 *
+	 * E_STRICT is purposively neglected（忽略） because such events may have
 	 * been caught. Duplication or none? None is preferred for now.
 	 *
 	 * @link	http://insomanic.me.uk/post/229851073/php-trick-catching-fatal-errors-e-error-with-a
@@ -725,6 +745,7 @@ if ( ! function_exists('_shutdown_handler'))
 	 */
 	function _shutdown_handler()
 	{
+		// 获取最后发生的错误
 		$last_error = error_get_last();
 		if (isset($last_error) &&
 			($last_error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING)))
@@ -780,10 +801,10 @@ if ( ! function_exists('remove_invisible_characters'))
 if ( ! function_exists('html_escape'))
 {
 	/**
-	 * Returns HTML escaped variable.
+	 * Returns HTML escaped(转义) variable.
 	 *
 	 * @param	mixed	$var		The input string or array of strings to be escaped.
-	 * @param	bool	$double_encode	$double_encode set to FALSE prevents escaping twice.
+	 * @param	bool	$double_encode	$double_encode set to FALSE prevents escaping twice. 防止转义两次
 	 * @return	mixed			The escaped string or array of strings as a result.
 	 */
 	function html_escape($var, $double_encode = TRUE)
@@ -797,12 +818,14 @@ if ( ! function_exists('html_escape'))
 		{
 			foreach (array_keys($var) as $key)
 			{
+				// 递归调用
 				$var[$key] = html_escape($var[$key], $double_encode);
 			}
 
 			return $var;
 		}
 
+		// ＆ ' " < > 转为实体符号
 		return htmlspecialchars($var, ENT_QUOTES, config_item('charset'), $double_encode);
 	}
 }
@@ -816,6 +839,10 @@ if ( ! function_exists('_stringify_attributes'))
 	 *
 	 * Helper function used to convert a string, array, or object
 	 * of attributes to a string.
+	 * 将字符串，数组，或者对象的属性转为字符串
+	 * array([width]=>200,[height]=>300)
+	 * js width=200;height=300;
+	 * width='200' height='300'
 	 *
 	 * @param	mixed	string, array, object
 	 * @param	bool
@@ -852,6 +879,7 @@ if ( ! function_exists('function_usable'))
 {
 	/**
 	 * Function usable
+	 * 函数是否可用
 	 *
 	 * Executes a function_exists() check, and if the Suhosin PHP
 	 * extension is loaded - checks whether the function that is
@@ -861,7 +889,7 @@ if ( ! function_exists('function_usable'))
 	 * functions disabled via the *disable_functions* php.ini
 	 * setting, but not for *suhosin.executor.func.blacklist* and
 	 * *suhosin.executor.disable_eval*. These settings will just
-	 * terminate script execution if a disabled function is executed.
+	 * terminate（终止） script execution if a disabled function is executed.
 	 *
 	 * The above described behavior turned out to be a bug in Suhosin,
 	 * but even though a fix was commited for 0.9.34 on 2012-02-12,
@@ -881,11 +909,13 @@ if ( ! function_exists('function_usable'))
 		{
 			if ( ! isset($_suhosin_func_blacklist))
 			{
+				// 加载subosin扩展
 				$_suhosin_func_blacklist = extension_loaded('suhosin')
 					? explode(',', trim(ini_get('suhosin.executor.func.blacklist')))
 					: array();
 			}
 
+			// 是否在subosin.executor.func.blacklist列表里面
 			return ! in_array($function_name, $_suhosin_func_blacklist, TRUE);
 		}
 

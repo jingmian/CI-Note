@@ -430,27 +430,33 @@ class CI_Upload {
 	public function do_upload($field = 'userfile')
 	{
 		// Is $_FILES[$field] set? If not, no reason to continue.
+		// 不存在该字段
 		if (isset($_FILES[$field]))
 		{
 			$_file = $_FILES[$field];
 		}
 		// Does the field name contain array notation?
+		//　field=>pic[] matches=>Array ( [0] => Array ( [0] => pic [1] => [] ) )
+		//　field=>pic[][] matches=>Array ( [0] => Array ( [0] => pic [1] => [] [2] => [] ) )
 		elseif (($c = preg_match_all('/(?:^[^\[]+)|\[[^]]*\]/', $field, $matches)) > 1)
 		{
 			$_file = $_FILES;
+			// c为匹配到结果次数
 			for ($i = 0; $i < $c; $i++)
 			{
-				// We can't track numeric iterations, only full field names are accepted
+				// We can't track numeric iterations(迭代), only full field names are accepted
+				// 如果字段为空或者FILES不存在该该值，则赋值null,检查下标
 				if (($field = trim($matches[0][$i], '[]')) === '' OR ! isset($_file[$field]))
 				{
 					$_file = NULL;
 					break;
 				}
-
+				// 获取对应的FILES值
 				$_file = $_file[$field];
 			}
 		}
 
+		// 不存在文件
 		if ( ! isset($_file))
 		{
 			$this->set_error('upload_no_file_selected', 'debug');
@@ -458,6 +464,7 @@ class CI_Upload {
 		}
 
 		// Is the upload path valid?
+		// 检查上传目录是否有效
 		if ( ! $this->validate_upload_path())
 		{
 			// errors will already be set by validate_upload_path() so just return FALSE
@@ -465,8 +472,10 @@ class CI_Upload {
 		}
 
 		// Was the file able to be uploaded? If not, determine the reason why.
+		// 判断文件是否是通过 HTTP POST 上传的,安全检查项
 		if ( ! is_uploaded_file($_file['tmp_name']))
 		{
+			// 是否存在上传错误
 			$error = isset($_file['error']) ? $_file['error'] : 4;
 
 			switch ($error)
@@ -501,22 +510,25 @@ class CI_Upload {
 		}
 
 		// Set the uploaded data as class variables
+		// 记录变量到类变量中
 		$this->file_temp = $_file['tmp_name'];
 		$this->file_size = $_file['size'];
 
 		// Skip MIME type detection?
+		// 是否探测mime
 		if ($this->detect_mime !== FALSE)
 		{
 			$this->_file_mime_type($_file);
 		}
 
-		$this->file_type = preg_replace('/^(.+?);.*$/', '\\1', $this->file_type);
+		$this->file_type = preg_replace('/^(.+?);.*$/', '\\1', $this->file_type); //文件类型
 		$this->file_type = strtolower(trim(stripslashes($this->file_type), '"'));
-		$this->file_name = $this->_prep_filename($_file['name']);
-		$this->file_ext	 = $this->get_extension($this->file_name);
-		$this->client_name = $this->file_name;
+		$this->file_name = $this->_prep_filename($_file['name']);	// 文件名
+		$this->file_ext	 = $this->get_extension($this->file_name);	// 文件扩展名
+		$this->client_name = $this->file_name; // 文件名
 
 		// Is the file type allowed to be uploaded?
+		// 文件类型是否允许上传
 		if ( ! $this->is_allowed_filetype())
 		{
 			$this->set_error('upload_invalid_filetype', 'debug');
@@ -524,11 +536,14 @@ class CI_Upload {
 		}
 
 		// if we're overriding, let's now make sure the new name and type is allowed
+		// 如果允许修改名称，确定名称和扩展类型是允许的
 		if ($this->_file_name_override !== '')
 		{
+			// 检查新文件名
 			$this->file_name = $this->_prep_filename($this->_file_name_override);
 
 			// If no extension was provided in the file_name config item, use the uploaded one
+			// 新文件名未提供扩展名，则使用上传文件的扩展名
 			if (strpos($this->_file_name_override, '.') === FALSE)
 			{
 				$this->file_name .= $this->file_ext;
@@ -539,6 +554,7 @@ class CI_Upload {
 				$this->file_ext	= $this->get_extension($this->_file_name_override);
 			}
 
+			// 是否允许改文件类型
 			if ( ! $this->is_allowed_filetype(TRUE))
 			{
 				$this->set_error('upload_invalid_filetype', 'debug');
@@ -547,20 +563,23 @@ class CI_Upload {
 		}
 
 		// Convert the file size to kilobytes
+		// 文件大小单位为kb
 		if ($this->file_size > 0)
 		{
 			$this->file_size = round($this->file_size/1024, 2);
 		}
 
 		// Is the file size within the allowed maximum?
+		// 检查文件大小是否合法
 		if ( ! $this->is_allowed_filesize())
 		{
 			$this->set_error('upload_invalid_filesize', 'info');
 			return FALSE;
 		}
 
-		// Are the image dimensions within the allowed size?
+		// Are the image dimensions（尺寸） within the allowed size?
 		// Note: This can fail if the server has an open_basedir restriction.
+		// 检查图片尺寸是否合法
 		if ( ! $this->is_allowed_dimensions())
 		{
 			$this->set_error('upload_invalid_dimensions', 'info');
@@ -568,20 +587,24 @@ class CI_Upload {
 		}
 
 		// Sanitize the file name for security
+		// 安全检查文件名
 		$this->file_name = $this->_CI->security->sanitize_filename($this->file_name);
 
 		// Truncate the file name if it's too long
+		// 文件名长度
 		if ($this->max_filename > 0)
 		{
 			$this->file_name = $this->limit_filename_length($this->file_name, $this->max_filename);
 		}
 
 		// Remove white spaces in the name
+		// 去除空白字符
 		if ($this->remove_spaces === TRUE)
 		{
 			$this->file_name = preg_replace('/\s+/', '_', $this->file_name);
 		}
 
+		// 将扩展名转为大写
 		if ($this->file_ext_tolower && ($ext_length = strlen($this->file_ext)))
 		{
 			// file_ext was previously lower-cased by a get_extension() call
@@ -594,7 +617,9 @@ class CI_Upload {
 		 * the file if one with the same name already exists.
 		 * If it returns false there was a problem.
 		 */
-		$this->orig_name = $this->file_name;
+		// 如果已有存放的名字，则在后面加个数字
+		// 如果返回false，表示出错
+		$this->orig_name = $this->file_name; // 记录原始文件名
 		if (FALSE === ($this->file_name = $this->set_filename($this->upload_path, $this->file_name)))
 		{
 			return FALSE;
@@ -606,6 +631,7 @@ class CI_Upload {
 		 * embedded within a file. Scripts can easily
 		 * be disguised as images or other file types.
 		 */
+		// xss过滤
 		if ($this->xss_clean && $this->do_xss_clean() === FALSE)
 		{
 			$this->set_error('upload_unable_to_write_file', 'error');
@@ -619,6 +645,11 @@ class CI_Upload {
 		 * we'll use move_uploaded_file(). One of the two should
 		 * reliably work in most environments
 		 */
+		// 将文件移到最终目录
+		// 为了处理不同服务器配置差异
+		//　我们优先使用copy函数，
+		// 如果失败，我们使用move_uploaded_file函数
+		// 这两个函数在大多数环境中都可运行
 		if ( ! @copy($this->file_temp, $this->upload_path.$this->file_name))
 		{
 			if ( ! @move_uploaded_file($this->file_temp, $this->upload_path.$this->file_name))
@@ -634,6 +665,7 @@ class CI_Upload {
 		 * file was an image). We use this information
 		 * in the "data" function.
 		 */
+		// 设置最终图片尺寸
 		$this->set_image_properties($this->upload_path.$this->file_name);
 
 		return TRUE;
@@ -650,6 +682,7 @@ class CI_Upload {
 	 * @param	string	$index
 	 * @return	mixed
 	 */
+	// 获取和上传文件相关信息的关联数组
 	public function data($index = NULL)
 	{
 		$data = array(
@@ -685,9 +718,11 @@ class CI_Upload {
 	 * @param	string	$path
 	 * @return	CI_Upload
 	 */
+	// 设置上传文件目录
 	public function set_upload_path($path)
 	{
 		// Make sure it has a trailing slash
+		// 确定最后一个是以斜干结尾
 		$this->upload_path = rtrim($path, '/').'/';
 		return $this;
 	}
@@ -705,23 +740,29 @@ class CI_Upload {
 	 * @param	string	$filename
 	 * @return	string
 	 */
+	// 设置文件名
 	public function set_filename($path, $filename)
 	{
+		// 是否对文件名进行md5编码
 		if ($this->encrypt_name === TRUE)
 		{
+			// md5 uniqid mt_rand
 			$filename = md5(uniqid(mt_rand())).$this->file_ext;
 		}
 
+		// 允许改文件名，而且该文件没有重复
 		if ($this->overwrite === TRUE OR ! file_exists($path.$filename))
 		{
 			return $filename;
 		}
 
+		// 获取文件名
 		$filename = str_replace($this->file_ext, '', $filename);
 
 		$new_filename = '';
 		for ($i = 1; $i < $this->max_filename_increment; $i++)
 		{
+			// 在文件名后面加个数字，然后检查该文件名是否已经存在，知道数字到了最大值 max_filename_increment
 			if ( ! file_exists($path.$filename.$i.$this->file_ext))
 			{
 				$new_filename = $filename.$i.$this->file_ext;
@@ -729,6 +770,7 @@ class CI_Upload {
 			}
 		}
 
+		// 没有可用文件名
 		if ($new_filename === '')
 		{
 			$this->set_error('upload_bad_filename', 'debug');
@@ -736,6 +778,7 @@ class CI_Upload {
 		}
 		else
 		{
+			// 返回新的文件名
 			return $new_filename;
 		}
 	}
@@ -748,6 +791,7 @@ class CI_Upload {
 	 * @param	int	$n
 	 * @return	CI_Upload
 	 */
+	//设置上传文件大小上限
 	public function set_max_filesize($n)
 	{
 		$this->max_size = ($n < 0) ? 0 : (int) $n;
@@ -778,6 +822,7 @@ class CI_Upload {
 	 * @param	int	$n
 	 * @return	CI_Upload
 	 */
+	// 设置文件名长度上限
 	public function set_max_filename($n)
 	{
 		$this->max_filename = ($n < 0) ? 0 : (int) $n;
@@ -792,6 +837,7 @@ class CI_Upload {
 	 * @param	int	$n
 	 * @return	CI_Upload
 	 */
+	// 设置图片最大宽度
 	public function set_max_width($n)
 	{
 		$this->max_width = ($n < 0) ? 0 : (int) $n;
@@ -806,6 +852,7 @@ class CI_Upload {
 	 * @param	int	$n
 	 * @return	CI_Upload
 	 */
+	// 设置图片最大高度
 	public function set_max_height($n)
 	{
 		$this->max_height = ($n < 0) ? 0 : (int) $n;
@@ -820,6 +867,7 @@ class CI_Upload {
 	 * @param	int	$n
 	 * @return	CI_Upload
 	 */
+	// 设置图片最小宽度
 	public function set_min_width($n)
 	{
 		$this->min_width = ($n < 0) ? 0 : (int) $n;
@@ -834,6 +882,7 @@ class CI_Upload {
 	 * @param	int	$n
 	 * @return	CI_Upload
 	 */
+	// 设置图片最小高度
 	public function set_min_height($n)
 	{
 		$this->min_height = ($n < 0) ? 0 : (int) $n;
@@ -848,6 +897,7 @@ class CI_Upload {
 	 * @param	mixed	$types
 	 * @return	CI_Upload
 	 */
+	// 设置文件上传类型
 	public function set_allowed_types($types)
 	{
 		$this->allowed_types = (is_array($types) OR $types === '*')
@@ -866,18 +916,21 @@ class CI_Upload {
 	 * @param	string	$path
 	 * @return	CI_Upload
 	 */
+	// 设置图片尺寸
 	public function set_image_properties($path = '')
 	{
+		// 文件类型
 		if ($this->is_image() && function_exists('getimagesize'))
 		{
+			//通过getimagesize获取图片信息
 			if (FALSE !== ($D = @getimagesize($path)))
 			{
 				$types = array(1 => 'gif', 2 => 'jpeg', 3 => 'png');
 
-				$this->image_width	= $D[0];
-				$this->image_height	= $D[1];
-				$this->image_type	= isset($types[$D[2]]) ? $types[$D[2]] : 'unknown';
-				$this->image_size_str	= $D[3]; // string containing height and width
+				$this->image_width	= $D[0];	// 宽度
+				$this->image_height	= $D[1];	// 高度
+				$this->image_type	= isset($types[$D[2]]) ? $types[$D[2]] : 'unknown';	// 类型
+				$this->image_size_str	= $D[3]; // string containing height and width	// 宽高字符串
 			}
 		}
 
@@ -908,6 +961,7 @@ class CI_Upload {
 	 *
 	 * @return	bool
 	 */
+	// 上传文件是否为图片
 	public function is_image()
 	{
 		// IE will sometimes return odd mime-types during upload, so here we just standardize all
@@ -938,27 +992,33 @@ class CI_Upload {
 	 * @param	bool	$ignore_mime
 	 * @return	bool
 	 */
+	// 检查上传文件类型是否合法
 	public function is_allowed_filetype($ignore_mime = FALSE)
 	{
+		//允许所有类型
 		if ($this->allowed_types === '*')
 		{
 			return TRUE;
 		}
 
+		//　设置错误
 		if (empty($this->allowed_types) OR ! is_array($this->allowed_types))
 		{
 			$this->set_error('upload_no_file_types', 'debug');
 			return FALSE;
 		}
 
+		// 获取文件类型，然后转化为小写
 		$ext = strtolower(ltrim($this->file_ext, '.'));
 
+		// 上传文件类型非法
 		if ( ! in_array($ext, $this->allowed_types, TRUE))
 		{
 			return FALSE;
 		}
 
 		// Images get some additional checks
+		// 如果扩展是图片，但是getimagesize为false，这是非法图片
 		if (in_array($ext, array('gif', 'jpg', 'jpeg', 'jpe', 'png'), TRUE) && @getimagesize($this->file_temp) === FALSE)
 		{
 			return FALSE;
@@ -969,6 +1029,7 @@ class CI_Upload {
 			return TRUE;
 		}
 
+		// 检查mimes
 		if (isset($this->_mimes[$ext]))
 		{
 			return is_array($this->_mimes[$ext])
@@ -986,6 +1047,7 @@ class CI_Upload {
 	 *
 	 * @return	bool
 	 */
+	 // 检查文件大小
 	public function is_allowed_filesize()
 	{
 		return ($this->max_size === 0 OR $this->max_size > $this->file_size);
@@ -998,32 +1060,40 @@ class CI_Upload {
 	 *
 	 * @return	bool
 	 */
+	// 检查文件尺寸
 	public function is_allowed_dimensions()
 	{
+		// 是否为图片
 		if ( ! $this->is_image())
 		{
 			return TRUE;
 		}
 
+		// 是否存在getimagesize函数
 		if (function_exists('getimagesize'))
 		{
+			// 通过函数获取 D[0]=宽度 D[1]=高度 D[2]=图片类型 D[3] = "height=xxx width=xxx"
 			$D = @getimagesize($this->file_temp);
 
+			// 宽度超了
 			if ($this->max_width > 0 && $D[0] > $this->max_width)
 			{
 				return FALSE;
 			}
 
+			// 高度超了
 			if ($this->max_height > 0 && $D[1] > $this->max_height)
 			{
 				return FALSE;
 			}
 
+			// 宽度太小
 			if ($this->min_width > 0 && $D[0] < $this->min_width)
 			{
 				return FALSE;
 			}
 
+			// 高度太小
 			if ($this->min_height > 0 && $D[1] < $this->min_height)
 			{
 				return FALSE;
@@ -1042,31 +1112,38 @@ class CI_Upload {
 	 *
 	 * @return	bool
 	 */
+	// 检查上传目录是否有效
 	public function validate_upload_path()
 	{
+		// 为空
 		if ($this->upload_path === '')
 		{
 			$this->set_error('upload_no_filepath', 'error');
 			return FALSE;
 		}
 
+		// 路径是否存在
 		if (realpath($this->upload_path) !== FALSE)
 		{
+			// 将分隔符 \ 转为 /
 			$this->upload_path = str_replace('\\', '/', realpath($this->upload_path));
 		}
 
+		// 是否为目录
 		if ( ! is_dir($this->upload_path))
 		{
 			$this->set_error('upload_no_filepath', 'error');
 			return FALSE;
 		}
 
+		// 是否可写
 		if ( ! is_really_writable($this->upload_path))
 		{
 			$this->set_error('upload_not_writable', 'error');
 			return FALSE;
 		}
 
+		// 格式化路径？
 		$this->upload_path = preg_replace('/(.+?)\/*$/', '\\1/',  $this->upload_path);
 		return TRUE;
 	}
@@ -1079,6 +1156,7 @@ class CI_Upload {
 	 * @param	string	$filename
 	 * @return	string
 	 */
+	// 获取文件扩展名（根据上传文件名来提取）
 	public function get_extension($filename)
 	{
 		$x = explode('.', $filename);
@@ -1101,8 +1179,10 @@ class CI_Upload {
 	 * @param	int	$length
 	 * @return	string
 	 */
+	// 限制文件名长度
 	public function limit_filename_length($filename, $length)
 	{
+		// 没超长度
 		if (strlen($filename) < $length)
 		{
 			return $filename;
@@ -1112,10 +1192,11 @@ class CI_Upload {
 		if (strpos($filename, '.') !== FALSE)
 		{
 			$parts		= explode('.', $filename);
-			$ext		= '.'.array_pop($parts);
+			$ext		= '.'.array_pop($parts); //　弹出最后一个元素
 			$filename	= implode('.', $parts);
 		}
 
+		// 通过substr截取文件名长度，不包括扩展部分
 		return substr($filename, 0, ($length - strlen($ext))).$ext;
 	}
 
@@ -1130,6 +1211,7 @@ class CI_Upload {
 	 *
 	 * @return	string
 	 */
+	// 对文件内容进行xss过滤
 	public function do_xss_clean()
 	{
 		$file = $this->file_temp;
@@ -1139,6 +1221,7 @@ class CI_Upload {
 			return FALSE;
 		}
 
+		// memory_get_usage  返回分配给 PHP 的内存量
 		if (memory_get_usage() && ($memory_limit = ini_get('memory_limit')))
 		{
 			$memory_limit *= 1024 * 1024;
@@ -1193,6 +1276,7 @@ class CI_Upload {
 	 * @param	string	$msg
 	 * @return	CI_Upload
 	 */
+	// 设置错误信息
 	public function set_error($msg, $log_level = 'error')
 	{
 		$this->_CI->lang->load('upload');
@@ -1217,6 +1301,7 @@ class CI_Upload {
 	 * @param	string	$close
 	 * @return	string
 	 */
+	// 显示错误
 	public function display_errors($open = '<p>', $close = '</p>')
 	{
 		return (count($this->error_msg) > 0) ? $open.implode($close.$open, $this->error_msg).$close : '';
@@ -1225,7 +1310,7 @@ class CI_Upload {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Prep Filename
+	 * Prep（准备） Filename
 	 *
 	 * Prevents possible script execution from Apache's handling
 	 * of files' multiple extensions.
@@ -1242,8 +1327,11 @@ class CI_Upload {
 			return $filename;
 		}
 
+		// 扩展类型
 		$ext = substr($filename, $ext_pos);
+		// 文件名
 		$filename = substr($filename, 0, $ext_pos);
+		// 将文件名中 . 替换成 _
 		return str_replace('.', '_', $filename).$ext;
 	}
 
@@ -1258,9 +1346,11 @@ class CI_Upload {
 	 * @param	array	$file
 	 * @return	void
 	 */
+	// 获取文件MIME类型
 	protected function _file_mime_type($file)
 	{
 		// We'll need this to validate the MIME info string (e.g. text/plain; charset=us-ascii)
+		// 验证
 		$regexp = '/^([a-z\-]+\/[a-z0-9\-\.\+]+)(;\s.+)?$/';
 
 		/* Fileinfo extension - most reliable method
@@ -1268,6 +1358,7 @@ class CI_Upload {
 		 * Unfortunately, prior to PHP 5.3 - it's only available as a PECL extension and the
 		 * more convenient FILEINFO_MIME_TYPE flag doesn't exist.
 		 */
+		// 扩展函数 finfo::file
 		if (function_exists('finfo_file'))
 		{
 			$finfo = @finfo_open(FILEINFO_MIME);

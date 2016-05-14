@@ -41,7 +41,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Benchmark Class
  *
  * This class enables you to mark points and calculate the time difference
- * between them. Memory consumption can also be displayed.
+ * between them. Memory consumption（消费） can also be displayed.
+ * 该类记录两个点之间的时间和内存的使用情况
  *
  * @package		CodeIgniter
  * @subpackage	Libraries
@@ -52,10 +53,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class CI_Benchmark {
 
 	/**
-	 * List of all benchmark markers
+	 * List of all benchmark（基准） markers
 	 *
 	 * @var	array
 	 */
+	// 基准点列表
 	public $marker = array();
 
 	/**
@@ -67,6 +69,7 @@ class CI_Benchmark {
 	 * @param	string	$name	Marker name
 	 * @return	void
 	 */
+	// 设置一个点，记录改点对应的时间的浮点数
 	public function mark($name)
 	{
 		$this->marker[$name] = microtime(TRUE);
@@ -84,14 +87,15 @@ class CI_Benchmark {
 	 * execution time to be shown in a template. The output class will
 	 * swap the real value for this variable.
 	 *
-	 * @param	string	$point1		A particular marked point
-	 * @param	string	$point2		A particular marked point
-	 * @param	int	$decimals	Number of decimal places
+	 * @param	string	$point1		A particular marked point 时间点1
+	 * @param	string	$point2		A particular marked point 时间点2
+	 * @param	int	$decimals	Number of decimal places 小数位
 	 *
 	 * @return	string	Calculated elapsed time on success,
 	 *			an '{elapsed_string}' if $point1 is empty
 	 *			or an empty string if $point1 is not found.
 	 */
+	// 计算两个点的时间，
 	public function elapsed_time($point1 = '', $point2 = '', $decimals = 4)
 	{
 		if ($point1 === '')

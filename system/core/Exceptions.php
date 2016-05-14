@@ -49,7 +49,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class CI_Exceptions {
 
 	/**
-	 * Nesting level of the output buffering mechanism
+	 * Nesting（嵌套） level of the output buffering mechanism（机制）
 	 *
 	 * @var	int
 	 */
@@ -63,7 +63,7 @@ class CI_Exceptions {
 	public $levels = array(
 		E_ERROR			=>	'Error',
 		E_WARNING		=>	'Warning',
-		E_PARSE			=>	'Parsing Error',
+		E_PARSE			=>	'Parsing Error', // 转化错误
 		E_NOTICE		=>	'Notice',
 		E_CORE_ERROR		=>	'Core Error',
 		E_CORE_WARNING		=>	'Core Warning',
@@ -82,6 +82,7 @@ class CI_Exceptions {
 	 */
 	public function __construct()
 	{
+		//  返回输出缓冲机制的嵌套级别
 		$this->ob_level = ob_get_level();
 		// Note: Do not log messages from this constructor.
 	}
@@ -90,8 +91,10 @@ class CI_Exceptions {
 
 	/**
 	 * Exception Logger
+	 * 异常记录器
 	 *
 	 * Logs PHP generated error messages
+	 * 记录php大致错误信息
 	 *
 	 * @param	int	$severity	Log level
 	 * @param	string	$message	Error message
@@ -109,17 +112,19 @@ class CI_Exceptions {
 
 	/**
 	 * 404 Error Handler
+	 * 404 错误处理
 	 *
 	 * @uses	CI_Exceptions::show_error()
 	 *
 	 * @param	string	$page		Page URI
-	 * @param 	bool	$log_error	Whether to log the error
+	 * @param 	bool	$log_error	Whether to log the error 是否记录改错误
 	 * @return	void
 	 */
 	public function show_404($page = '', $log_error = TRUE)
 	{
 		if (is_cli())
 		{
+			//cli模式
 			$heading = 'Not Found';
 			$message = 'The controller/method pair you requested was not found.';
 		}
@@ -130,11 +135,13 @@ class CI_Exceptions {
 		}
 
 		// By default we log this, but allow a dev to skip it
+		// 记录404错误
 		if ($log_error)
 		{
 			log_message('error', $heading.': '.$page);
 		}
 
+		// 显示错误
 		echo $this->show_error($heading, $message, 'error_404', 404);
 		exit(4); // EXIT_UNKNOWN_FILE
 	}
@@ -142,10 +149,12 @@ class CI_Exceptions {
 	// --------------------------------------------------------------------
 
 	/**
-	 * General Error Page
+	 * General（一般） Error Page
+	 * 一般错误提示页面
 	 *
 	 * Takes an error message as input (either as a string or an array)
 	 * and displays it using the specified template.
+	 * 使用特殊模板去显示一个错误，改错误可以是字符串或者是数组
 	 *
 	 * @param	string		$heading	Page heading
 	 * @param	string|string[]	$message	Error message
@@ -156,32 +165,43 @@ class CI_Exceptions {
 	 */
 	public function show_error($heading, $message, $template = 'error_general', $status_code = 500)
 	{
+		// 获取错误视图路径
 		$templates_path = config_item('error_views_path');
 		if (empty($templates_path))
 		{
+			// 模式错误视图路径
 			$templates_path = VIEWPATH.'errors'.DIRECTORY_SEPARATOR;
 		}
 
 		if (is_cli())
 		{
+			// cli模式
 			$message = "\t".(is_array($message) ? implode("\n\t", $message) : $message);
 			$template = 'cli'.DIRECTORY_SEPARATOR.$template;
 		}
 		else
 		{
+			// 设置相应码
 			set_status_header($status_code);
+			// 拼接模板
 			$message = '<p>'.(is_array($message) ? implode('</p><p>', $message) : $message).'</p>';
 			$template = 'html'.DIRECTORY_SEPARATOR.$template;
 		}
 
+		// 关闭之前已开启缓存
 		if (ob_get_level() > $this->ob_level + 1)
 		{
 			ob_end_flush();
 		}
+
+		// 开启缓存
 		ob_start();
 		include($templates_path.$template.'.php');
+		// 获取缓存内容
 		$buffer = ob_get_contents();
+		// 清空关闭缓存
 		ob_end_clean();
+		// 返回
 		return $buffer;
 	}
 
@@ -189,6 +209,7 @@ class CI_Exceptions {
 
 	public function show_exception($exception)
 	{
+		// 错误视图模板路径
 		$templates_path = config_item('error_views_path');
 		if (empty($templates_path))
 		{

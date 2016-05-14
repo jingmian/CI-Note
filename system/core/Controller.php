@@ -56,6 +56,7 @@ class CI_Controller {
 	 *
 	 * @var	object
 	 */
+	// 引用CI单实例对象
 	private static $instance;
 
 	/**
@@ -63,6 +64,7 @@ class CI_Controller {
 	 *
 	 * @return	void
 	 */
+	// 构造函数
 	public function __construct()
 	{
 		self::$instance =& $this;
@@ -70,13 +72,18 @@ class CI_Controller {
 		// Assign all the class objects that were instantiated by the
 		// bootstrap file (CodeIgniter.php) to local class variables
 		// so that CI can run as one big super object.
+		// is_loaded内部使用一个静态的数组记录当前已加载的类
 		foreach (is_loaded() as $var => $class)
 		{
+			// 将以载入的对象赋值到控制器类中
 			$this->$var =& load_class($class);
 		}
 
+		// 加载 加载器
 		$this->load =& load_class('Loader', 'core');
+		// 加载器初始化，根据配置文件等逐步加载类
 		$this->load->initialize();
+		// 记录日志
 		log_message('info', 'Controller Class Initialized');
 	}
 
@@ -88,6 +95,7 @@ class CI_Controller {
 	 * @static
 	 * @return	object
 	 */
+	// 获取单实例
 	public static function &get_instance()
 	{
 		return self::$instance;
