@@ -62,6 +62,7 @@ class CI_Model {
 
 	/**
 	 * __get magic
+	 * get魔术方法
 	 *
 	 * Allows models to access CI's loaded classes using the same
 	 * syntax as controllers.
