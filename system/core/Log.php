@@ -242,13 +242,10 @@ class CI_Log {
 		//拼接内容
 		$message .= $this->_format_line($level, $date, $msg);
 
-<<<<<<< HEAD
 		//通过排他锁锁定日志文件，防止多个进程同时操作文件
 		flock($fp, LOCK_EX);
 
 		//??? 为什么用for写入?
-=======
->>>>>>> refs/remotes/bcit-ci/develop
 		for ($written = 0, $length = strlen($message); $written < $length; $written += $result)
 		{
 			if (($result = fwrite($fp, substr($message, $written))) === FALSE)
