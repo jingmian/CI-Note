@@ -714,7 +714,7 @@ class CI_Input {
 		// 剥去字符串中的 HTML、XML 以及 PHP 的标签
 		$_SERVER['PHP_SELF'] = strip_tags($_SERVER['PHP_SELF']);
 
-		log_message('debug', 'Global POST, GET and COOKIE data sanitized');
+		log_message('info', 'Global POST, GET and COOKIE data sanitized');
 	}
 
 	// --------------------------------------------------------------------

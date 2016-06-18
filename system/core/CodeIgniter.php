@@ -386,7 +386,7 @@ if ( ! is_php('5.4'))
 	 *
 	 * Returns current CI instance object
 	 *
-	 * @return object
+	 * @return CI_Controller
 	 */
 	 //定义get_instance方法
 	function &get_instance()
