@@ -55,6 +55,7 @@ class CI_URI {
 	 *
 	 * @var	array
 	 */
+	// 缓存的uri列表
 	public $keyval = array();
 
 	/**
@@ -62,6 +63,7 @@ class CI_URI {
 	 *
 	 * @var	string
 	 */
+	// 当前uri字符串
 	public $uri_string = '';
 
 	/**
@@ -71,6 +73,7 @@ class CI_URI {
 	 *
 	 * @var	array
 	 */
+
 	public $segments = array();
 
 	/**
