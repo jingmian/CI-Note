@@ -73,7 +73,7 @@ class CI_URI {
 	 *
 	 * @var	array
 	 */
-
+	//
 	public $segments = array();
 
 	/**
@@ -101,6 +101,7 @@ class CI_URI {
 	 */
 	public function __construct(CI_Config $config)
 	{
+		// ci 配置对象
 		$this->config = $config;
 
 		// If it's a CLI request, ignore the configuration
@@ -111,6 +112,7 @@ class CI_URI {
 		// If query strings are enabled, we don't need to parse any segments.
 		elseif ($this->config->item('enable_query_strings') !== TRUE)
 		{
+			//
 			$this->_permitted_uri_chars = $this->config->item('permitted_uri_chars');
 			$protocol = $this->config->item('uri_protocol');
 			empty($protocol) && $protocol = 'REQUEST_URI';
@@ -355,13 +357,14 @@ class CI_URI {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch URI Segment
+	 * Fetch URI Segment 遍历uri的段
 	 *
 	 * @see		CI_URI::$segments
-	 * @param	int		$n		Index
-	 * @param	mixed		$no_result	What to return if the segment index is not found
-	 * @return	mixed
+	 * @param	int		$n		Index 段下标
+	 * @param	mixed		$no_result	What to return if the segment index is not found 如果段不存在，则返回什么？
+	 * @return	mixed 返回对应的段
 	 */
+	// 用于从 URI 中获取指定段。参数 n 为你希望获取的段序号，URI 的段从左到右进行编号
 	public function segment($n, $no_result = NULL)
 	{
 		return isset($this->segments[$n]) ? $this->segments[$n] : $no_result;
@@ -370,7 +373,7 @@ class CI_URI {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Fetch URI "routed" Segment
+	 * Fetch URI "routed" Segment 遍历uri的段
 	 *
 	 * Returns the re-routed URI segment (assuming routing rules are used)
 	 * based on the index provided. If there is no routing, will return
@@ -382,6 +385,7 @@ class CI_URI {
 	 * @param	mixed		$no_result	What to return if the segment index is not found
 	 * @return	mixed
 	 */
+	// 当你使用 CodeIgniter 的 URI 路由 功能时，该方法和 segment() 类似， 只是它用于从路由后的 URI 中获取指定段。
 	public function rsegment($n, $no_result = NULL)
 	{
 		return isset($this->rsegments[$n]) ? $this->rsegments[$n] : $no_result;
@@ -435,7 +439,7 @@ class CI_URI {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Internal URI-to-assoc
+	 * Internal URI-to-assoc uri转成关联数组
 	 *
 	 * Generates a key/value pair from the URI string or re-routed URI string.
 	 *
@@ -510,6 +514,7 @@ class CI_URI {
 	 * Assoc to URI
 	 *
 	 * Generates a URI string from an associative array.
+	 * 从一个关联数组转为uri字符串 key/val
 	 *
 	 * @param	array	$array	Input array of key/value pairs
 	 * @return	string	URI string
@@ -594,7 +599,7 @@ class CI_URI {
 	/**
 	 * Segment Array
 	 *
-	 * @return	array	CI_URI::$segments
+	 * @return	array	CI_URI::$segments 返回段数组
 	 */
 	public function segment_array()
 	{
