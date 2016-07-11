@@ -493,12 +493,8 @@ class CI_Form_validation {
 		$this->CI->lang->load('form_validation');
 
 		// Cycle through the rules for each field and match the corresponding $validation_data item
-<<<<<<< HEAD
 		// 变量字段验证
-		foreach ($this->_field_data as $field => $row)
-=======
 		foreach ($this->_field_data as $field => &$row)
->>>>>>> refs/remotes/bcit-ci/develop
 		{
 			// Fetch the data from the validation_data array item and cache it in the _field_data array.
 			// Depending on whether the field name is an array or a string will determine where we get it from.
@@ -1587,12 +1583,8 @@ class CI_Form_validation {
 	 * @param	mixed	$data	Input data
 	 * @return	mixed
 	 */
-<<<<<<< HEAD
 	// 将 ' " < > 转为实体字符
-	public function prep_for_form($data = '')
-=======
 	public function prep_for_form($data)
->>>>>>> refs/remotes/bcit-ci/develop
 	{
 		// 未开启或者参数为空
 		if ($this->_safe_form_data === FALSE OR empty($data))
