@@ -50,12 +50,15 @@ class CI_Session {
 
 	/**
 	 * Userdata array
+	 * 保存session数据的数组
 	 *
 	 * Just a reference to $_SESSION, for BC purposes.
 	 */
 	public $userdata;
 
+	// session 驱动，系统有文件，数据库，redis，memcache4中驱动，其中默认是file
 	protected $_driver = 'files';
+	// session 配置，在config[sess_]里面配置
 	protected $_config;
 
 	// ------------------------------------------------------------------------
@@ -69,6 +72,7 @@ class CI_Session {
 	public function __construct(array $params = array())
 	{
 		// No sessions under CLI
+		// cli模式下不存在session
 		if (is_cli())
 		{
 			log_message('debug', 'Session: Initialization under CLI aborted.');
@@ -76,29 +80,37 @@ class CI_Session {
 		}
 		elseif ((bool) ini_get('session.auto_start'))
 		{
+			// session.auto_start = 1 默认处理请求之前默认开启session，无效在程序头部调用session_start函数
+			// 如果开启了php的session，则报错
 			log_message('error', 'Session: session.auto_start is enabled in php.ini. Aborting.');
 			return;
 		}
 		elseif ( ! empty($params['driver']))
 		{
+			// 根据配置设置驱动类型
 			$this->_driver = $params['driver'];
 			unset($params['driver']);
 		}
 		elseif ($driver = config_item('sess_driver'))
 		{
+			// 根据config里面的配置设置驱动类型
 			$this->_driver = $driver;
 		}
 		// Note: BC workaround
 		elseif (config_item('sess_use_database'))
 		{
+			// 驱动类型为数据库
 			$this->_driver = 'database';
 		}
 
+		// 加载session驱动类文件，返回类名
 		$class = $this->_ci_load_classes($this->_driver);
 
 		// Configuration ...
+		// 更具输入的参数和默认参数配置session
 		$this->_configure($params);
 
+		// 初始化类
 		$class = new $class($this->_config);
 		if ($class instanceof SessionHandlerInterface)
 		{
@@ -177,38 +189,49 @@ class CI_Session {
 
 	/**
 	 * CI Load Classes
+	 * ci 加载类
 	 *
-	 * An internal method to load all possible dependency and extension
-	 * classes. It kind of emulates the CI_Driver library, but is
-	 * self-sufficient.
+	 * An internal（内部） method to load all possible（可能） dependency（依赖） and extension（扩展）
+	 * classes. It kind of emulates（模拟） the CI_Driver library, but is
+	 * self-sufficient（自给）.
+	 * 一个内部方法来加载该类所有可能依赖或者扩展的类，
 	 *
-	 * @param	string	$driver	Driver name
-	 * @return	string	Driver class name
+	 * @param	string	$driver	Driver name 驱动名称
+	 * @return	string	Driver class name	返回驱动类名
 	 */
 	protected function _ci_load_classes($driver)
 	{
-		// PHP 5.4 compatibility
+		// PHP 5.4 compatibility（兼容性）
+		// php 5.4 兼容性
+		// interface_exists 检查接口是否被定义
+		// 如果接口未被定义，则加载接口
 		interface_exists('SessionHandlerInterface', FALSE) OR require_once(BASEPATH.'libraries/Session/SessionHandlerInterface.php');
 
+		// 扩展子类前缀
 		$prefix = config_item('subclass_prefix');
 
+		// session驱动类是否已经被定义
 		if ( ! class_exists('CI_Session_driver', FALSE))
 		{
+			// 加载session驱动类
 			require_once(
 				file_exists(APPPATH.'libraries/Session/Session_driver.php')
 					? APPPATH.'libraries/Session/Session_driver.php'
 					: BASEPATH.'libraries/Session/Session_driver.php'
 			);
 
+			// 是否存在扩展子类，如果有则加载扩展子类
 			if (file_exists($file_path = APPPATH.'libraries/Session/'.$prefix.'Session_driver.php'))
 			{
 				require_once($file_path);
 			}
 		}
 
+		// session 驱动实现类
 		$class = 'Session_'.$driver.'_driver';
 
 		// Allow custom drivers without the CI_ or MY_ prefix
+		// 允许用户驱动类可以不适用 CI_ 或者 MY_ 前缀
 		if ( ! class_exists($class, FALSE) && file_exists($file_path = APPPATH.'libraries/Session/drivers/'.$class.'.php'))
 		{
 			require_once($file_path);
@@ -218,6 +241,7 @@ class CI_Session {
 			}
 		}
 
+		// cI_前缀的类没有被定义
 		if ( ! class_exists('CI_'.$class, FALSE))
 		{
 			if (file_exists($file_path = APPPATH.'libraries/Session/drivers/'.$class.'.php') OR file_exists($file_path = BASEPATH.'libraries/Session/drivers/'.$class.'.php'))
@@ -225,6 +249,7 @@ class CI_Session {
 				require_once($file_path);
 			}
 
+			//  检查类文件是否有效
 			if ( ! class_exists('CI_'.$class, FALSE) && ! class_exists($class, FALSE))
 			{
 				throw new UnexpectedValueException("Session: Configured driver '".$driver."' was not found. Aborting.");
@@ -253,6 +278,7 @@ class CI_Session {
 	 * Configuration
 	 *
 	 * Handle input parameters and configuration defaults
+	 * 处理输入参数和默认配置
 	 *
 	 * @param	array	&$params	Input parameters
 	 * @return	void
