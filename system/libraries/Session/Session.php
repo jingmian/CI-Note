@@ -116,6 +116,7 @@ class CI_Session {
 		{
 			if (is_php('5.4'))
 			{
+				//设置用户自定义会话存储函数 必须实现 SessionHandlerInterface接口
 				session_set_save_handler($class, TRUE);
 			}
 			else
@@ -129,6 +130,9 @@ class CI_Session {
 					array($class, 'gc')
 				);
 
+				// session_write_close 别名 session_commit 写入session到文件或者数据库中，固化session数据
+				// 如果在页面退出才写入session，关闭文件或者链接，可能会导致session阻塞问题
+				// register_shutdown_function 注册一个函数在页面关闭前执行
 				register_shutdown_function('session_write_close');
 			}
 		}
@@ -139,6 +143,7 @@ class CI_Session {
 		}
 
 		// Sanitize the cookie, because apparently PHP doesn't do that for userspace handlers
+		// 检查cookie中session id是否合法
 		if (isset($_COOKIE[$this->_config['cookie_name']])
 			&& (
 				! is_string($_COOKIE[$this->_config['cookie_name']])
@@ -146,29 +151,38 @@ class CI_Session {
 			)
 		)
 		{
+			// 删除非法session id
 			unset($_COOKIE[$this->_config['cookie_name']]);
 		}
 
+		// 开启session
 		session_start();
 
-		// Is session ID auto-regeneration configured? (ignoring ajax requests)
+		// Is session ID auto-regeneration（自动生成） configured? (ignoring ajax requests)
+		// 非ajax，而且设置自动更新session id 时间
 		if ((empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest')
-			&& ($regenerate_time = config_item('sess_time_to_update')) > 0
+			&& ($regenerate_time = config_item('sess_time_to_update')) > 0 // 设置session id 更新时间
 		)
 		{
 			if ( ! isset($_SESSION['__ci_last_regenerate']))
 			{
+				// 设置最新生成session_id时间
 				$_SESSION['__ci_last_regenerate'] = time();
 			}
 			elseif ($_SESSION['__ci_last_regenerate'] < (time() - $regenerate_time))
 			{
+				// sess_regenerate_destroy
+				// 当自动重新生成 session ID 时，是否销毁老的 session ID 对应的数据 如果设置为 FALSE ，数据之后将自动被垃圾回收器删除
+				// 使用新生成的会话 ID 更新现有会话 ID
 				$this->sess_regenerate((bool) config_item('sess_regenerate_destroy'));
 			}
 		}
-		// Another work-around ... PHP doesn't seem to send the session cookie
-		// unless it is being currently created or regenerated
+		// Another work-around(应急方法) ... PHP doesn't seem(似乎) to send the session cookie
+		// unless(除非) it is being currently created or regenerated
+		// ajax 请求或者不重新生成session_id 进入该区域
 		elseif (isset($_COOKIE[$this->_config['cookie_name']]) && $_COOKIE[$this->_config['cookie_name']] === session_id())
 		{
+			// 设置cookie 中session_id
 			setcookie(
 				$this->_config['cookie_name'],
 				session_id(),
@@ -347,10 +361,12 @@ class CI_Session {
 	// ------------------------------------------------------------------------
 
 	/**
-	 * Handle temporary variables
+	 * Handle temporary（临时） variables
+	 * 处理一个临时变量
 	 *
 	 * Clears old "flash" data, marks the new one for deletion and handles
 	 * "temp" data deletion.
+	 * 清理旧数据，为新数据删除和处理做标记
 	 *
 	 * @return	void
 	 */
@@ -358,15 +374,17 @@ class CI_Session {
 	{
 		if ( ! empty($_SESSION['__ci_vars']))
 		{
+			// 记录时间
 			$current_time = time();
 
+			// 遍历session中ci_var数组 //&$value
 			foreach ($_SESSION['__ci_vars'] as $key => &$value)
 			{
 				if ($value === 'new')
 				{
 					$_SESSION['__ci_vars'][$key] = 'old';
 				}
-				// Hacky, but 'old' will (implicitly) always be less than time() ;)
+				// Hacky, but 'old' will (implicitly(隐式地)) always be less than time() ;)
 				// DO NOT move this above the 'new' check!
 				elseif ($value < $current_time)
 				{
@@ -657,15 +675,17 @@ class CI_Session {
 
 	/**
 	 * Session regenerate
+	 * session 生成函数
 	 *
 	 * Legacy CI_Session compatibility method
 	 *
-	 * @param	bool	$destroy	Destroy old session data flag
+	 * @param	bool	$destroy	Destroy old session data flag 是否销毁就session数据
 	 * @return	void
 	 */
 	public function sess_regenerate($destroy = FALSE)
 	{
 		$_SESSION['__ci_last_regenerate'] = time();
+		// 使用新生成的会话 ID 更新现有会话 ID
 		session_regenerate_id($destroy);
 	}
 

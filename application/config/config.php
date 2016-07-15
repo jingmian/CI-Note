@@ -361,6 +361,7 @@ $config['encryption_key'] = '';
 |
 |	How many seconds between CI regenerating the session ID.
 |
+|
 | 'sess_regenerate_destroy'
 |
 |	Whether to destroy session data associated with the old session ID
@@ -373,10 +374,13 @@ $config['encryption_key'] = '';
 */
 // ci3.0 和 php 5.4非线程安全版本 有冲突，导致服务器报500错误
 $config['sess_driver'] = 'files';
+//session保存在cookie中的名称
 $config['sess_cookie_name'] = 'ci_session';
+//你希望 session 持续的秒数 如果你希望 session 不过期（直到浏览器关闭），将其设置为 0
 $config['sess_expiration'] = 7200;
 $config['sess_save_path'] = NULL;
 $config['sess_match_ip'] = FALSE;
+//控制过多久将重新生成一个新 session ID 设置为 0 将禁用 session ID 的重新生成
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;
 
